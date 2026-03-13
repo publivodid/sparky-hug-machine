@@ -118,13 +118,16 @@ const normalizeDateFields = <T extends Record<string, unknown>>(payload: T, date
   return normalized;
 };
 
-const saveById = async <T extends { id?: string }>(table: TableName, payload: T): Promise<T | null> => {
-  const normalized = normalizeDateFields(payload as Record<string, unknown>) as T;
-  const { id, ...rest } = normalized as T & Record<string, unknown>;
+const saveById = async <T>(
+  table: TableName,
+  payload: { id?: string } & Record<string, unknown>,
+): Promise<T | null> => {
+  const normalized = normalizeDateFields(payload);
+  const { id, ...rest } = normalized;
 
   if (id) {
     return runQuery<T | null>(
-      supabase
+      (supabase as any)
         .from(table)
         .update(rest)
         .eq("id", id)
@@ -134,7 +137,7 @@ const saveById = async <T extends { id?: string }>(table: TableName, payload: T)
   }
 
   return runQuery<T | null>(
-    supabase
+    (supabase as any)
       .from(table)
       .insert(rest)
       .select()
@@ -144,7 +147,7 @@ const saveById = async <T extends { id?: string }>(table: TableName, payload: T)
 
 const removeById = async (table: TableName, id: string) => {
   await runQuery<unknown>(
-    supabase
+    (supabase as any)
       .from(table)
       .delete()
       .eq("id", id) as PromiseLike<{ data: unknown; error: unknown }>,
