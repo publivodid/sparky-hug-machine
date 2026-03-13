@@ -78,6 +78,21 @@ export interface HistoryEntry {
   user: string;
 }
 
+export interface CompanyInfo {
+  id: string;
+  profile_id: string;
+  description: string;
+  created_at: string;
+}
+
+export interface CompanyMaterial {
+  id: string;
+  profile_id: string;
+  label: string;
+  url: string;
+  created_at: string;
+}
+
 type TableName =
   | "profiles"
   | "monthly_metrics"
