@@ -166,6 +166,12 @@ const ProfileDetail = () => {
             <MetricCard icon="🌐" label="Cliques no site" value={latest?.websiteClicks || 0} current={latest?.websiteClicks} previous={previous?.websiteClicks} />
             <MetricCard icon="📍" label="Rotas solicitadas" value={latest?.routeRequests || 0} current={latest?.routeRequests} previous={previous?.routeRequests} />
           </div>
+          {latest && (
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+              <span>📅 Métrica atualizada mês — {String(latest.month).padStart(2, '0')}/{String(latest.year).slice(-2)}</span>
+              <span>Próxima atualização daqui a 30 dias</span>
+            </div>
+          )}
         </TabsContent>
 
         {/* REVIEWS */}
