@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
   const profiles = getProfiles();
+  const activeIds = new Set(profiles.filter(p => p.status !== 'archived').map(p => p.id));
   const metrics = getMetrics();
   const posts = getPosts();
-  const tasks = getTasks();
+  const tasks = getTasks().filter(t => activeIds.has(t.profileId));
   const reports = getReports();
 
   const now = new Date();
