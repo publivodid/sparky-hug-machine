@@ -64,6 +64,9 @@ const Profiles = () => {
     const updated = profiles.filter(p => p.id !== deleteTarget);
     setProfiles(updated);
     setLocalProfiles(updated);
+    // Remove tasks of deleted profile
+    const remainingTasks = getTasks().filter(t => t.profileId !== deleteTarget);
+    setTasks(remainingTasks);
     addHistory(deleteTarget, `Perfil "${name}" excluído`);
     setDeleteTarget(null);
     toast.success('Perfil excluído!');
