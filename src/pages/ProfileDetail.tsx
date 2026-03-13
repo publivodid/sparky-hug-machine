@@ -23,7 +23,8 @@ const ProfileDetail = () => {
   const refresh = () => setRefresh(n => n + 1);
 
   const [showMetrics, setShowMetrics] = useState(false);
-  const [metricsForm, setMetricsForm] = useState({ month: '', year: '', averageRating: '', totalReviews: '', profileViews: '', phoneClicks: '', websiteClicks: '', routeRequests: '' });
+  const now = new Date();
+  const [metricsForm, setMetricsForm] = useState({ month: String(now.getMonth() + 1), year: String(now.getFullYear()), averageRating: '', totalReviews: '', profileViews: '', phoneClicks: '', websiteClicks: '', routeRequests: '' });
 
   const [showPost, setShowPost] = useState(false);
   const [postForm, setPostForm] = useState({ imageUrl: '', text: '' });
