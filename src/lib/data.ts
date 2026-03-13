@@ -101,7 +101,9 @@ type TableName =
   | "reports"
   | "profile_updates"
   | "tasks"
-  | "history";
+  | "history"
+  | "company_info"
+  | "company_materials";
 
 const toError = (error: unknown) => {
   if (error && typeof error === "object" && "message" in error) {
