@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, MapPin, User, ExternalLink, MoreVertical, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Plus, Search, MapPin, User, ExternalLink, MoreVertical, Trash2, Archive, ArchiveRestore, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 const Profiles = () => {
@@ -18,6 +18,7 @@ const Profiles = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', category: '', city: '', responsible: '' });
 
   const activeProfiles = profiles.filter(p => p.status !== 'archived');
@@ -38,6 +39,26 @@ const Profiles = () => {
     setForm({ name: '', category: '', city: '', responsible: '' });
     setShowAdd(false);
     toast.success('Perfil criado!');
+  };
+
+  const openEdit = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const p = profiles.find(pr => pr.id === id);
+    if (p) {
+      setForm({ name: p.name, category: p.category, city: p.city, responsible: p.responsible });
+      setEditTarget(id);
+    }
+  };
+
+  const handleEdit = () => {
+    if (!editTarget || !form.name) return;
+    const updated = profiles.map(p => p.id === editTarget ? { ...p, ...form } : p);
+    setProfiles(updated);
+    setLocalProfiles(updated);
+    addHistory(editTarget, `Perfil editado`);
+    setEditTarget(null);
+    setForm({ name: '', category: '', city: '', responsible: '' });
+    toast.success('Perfil atualizado!');
   };
 
   const handleArchive = (id: string, e: React.MouseEvent) => {
@@ -115,6 +136,9 @@ const Profiles = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={e => openEdit(p.id, e as unknown as React.MouseEvent)}>
+                        <Pencil className="h-4 w-4 mr-2" /> Editar
+                      </DropdownMenuItem>
                       {isArchived ? (
                         <DropdownMenuItem onClick={e => handleRestore(p.id, e as unknown as React.MouseEvent)}>
                           <ArchiveRestore className="h-4 w-4 mr-2" /> Restaurar
@@ -156,6 +180,20 @@ const Profiles = () => {
             <div><Label>Responsável</Label><Input value={form.responsible} onChange={e => setForm(f => ({ ...f, responsible: e.target.value }))} /></div>
           </div>
           <DialogFooter><Button onClick={handleAdd}>Adicionar</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editTarget} onOpenChange={() => setEditTarget(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar Perfil</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div><Label>Nome da empresa</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+            <div><Label>Categoria</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
+            <div><Label>Cidade</Label><Input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} /></div>
+            <div><Label>Responsável</Label><Input value={form.responsible} onChange={e => setForm(f => ({ ...f, responsible: e.target.value }))} /></div>
+          </div>
+          <DialogFooter><Button onClick={handleEdit}>Salvar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
