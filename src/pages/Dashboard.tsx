@@ -1,4 +1,4 @@
-import { getProfiles, getMetrics, getPosts, getTasks, getReports, getReviews } from "@/lib/data";
+import { getProfiles, getMetrics, getPosts, getTasks, getReports } from "@/lib/data";
 import { MetricCard } from "@/components/MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,15 +9,6 @@ const Dashboard = () => {
   const posts = getPosts();
   const tasks = getTasks();
   const reports = getReports();
-  const reviews = getReviews();
-
-  const totalReviews = metrics.reduce((acc, m) => Math.max(acc, m.totalReviews), 0);
-  const totalAllReviews = profiles.reduce((sum, p) => {
-    const latest = metrics
-      .filter(m => m.profileId === p.id)
-      .sort((a, b) => (b.year * 100 + b.month) - (a.year * 100 + a.month))[0];
-    return sum + (latest?.totalReviews || 0);
-  }, 0);
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
@@ -35,53 +26,32 @@ const Dashboard = () => {
         <p className="text-muted-foreground text-sm">Resumo geral da agência</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard icon="📊" label="Perfis cadastrados" value={profiles.length} />
-        <MetricCard icon="⭐" label="Total de avaliações" value={totalAllReviews} />
         <MetricCard icon="📝" label="Posts no mês" value={postsThisMonth} />
         <MetricCard icon="📋" label="Tarefas pendentes" value={pendingTasks} />
         <MetricCard icon="📄" label="Relatórios enviados" value={reports.length} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Tarefas Recentes</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {tasks.slice(0, 5).map(t => (
-              <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="text-sm font-medium">{t.title}</p>
-                  <p className="text-xs text-muted-foreground">{t.responsible}</p>
-                </div>
-                <Badge variant={t.status === 'completed' ? 'default' : t.status === 'in_progress' ? 'secondary' : 'outline'}>
-                  {t.status === 'pending' ? 'Pendente' : t.status === 'in_progress' ? 'Em andamento' : 'Concluído'}
-                </Badge>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Tarefas Recentes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {tasks.slice(0, 5).map(t => (
+            <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div>
+                <p className="text-sm font-medium">{t.title}</p>
+                <p className="text-xs text-muted-foreground">{t.responsible}</p>
               </div>
-            ))}
-            {tasks.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma tarefa</p>}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Avaliações Recentes</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {reviews.slice(0, 5).map(r => (
-              <div key={r.id} className="p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium">{r.author}</p>
-                  <span className="text-sm">{'⭐'.repeat(r.rating)}</span>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-2">{r.text}</p>
-              </div>
-            ))}
-            {reviews.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma avaliação</p>}
-          </CardContent>
-        </Card>
-      </div>
+              <Badge variant={t.status === 'completed' ? 'default' : t.status === 'in_progress' ? 'secondary' : 'outline'}>
+                {t.status === 'pending' ? 'Pendente' : t.status === 'in_progress' ? 'Em andamento' : 'Concluído'}
+              </Badge>
+            </div>
+          ))}
+          {tasks.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma tarefa</p>}
+        </CardContent>
+      </Card>
     </div>
   );
 };

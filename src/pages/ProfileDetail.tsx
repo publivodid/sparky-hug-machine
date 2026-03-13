@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProfiles, getLatestMetrics, getPreviousMetrics, getMetrics, setMetrics, getReviews, setReviews, getPosts, setPosts, getReports, setReports, getUpdates, setUpdates, getTasks, setTasks, getHistory, addHistory } from "@/lib/data";
-import type { MonthlyMetrics, Review, Post, Report, ProfileUpdate, Task } from "@/lib/data";
+import { getProfiles, getLatestMetrics, getPreviousMetrics, getMetrics, setMetrics, getPosts, setPosts, getReports, setReports, getUpdates, setUpdates, getTasks, setTasks, getHistory, addHistory } from "@/lib/data";
+import type { Post, Report, ProfileUpdate, Task } from "@/lib/data";
 import { MetricCard } from "@/components/MetricCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Check, X, Star } from "lucide-react";
+import { ArrowLeft, Plus, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 const ProfileDetail = () => {
@@ -25,9 +25,6 @@ const ProfileDetail = () => {
   const [showMetrics, setShowMetrics] = useState(false);
   const [metricsForm, setMetricsForm] = useState({ month: '', year: '', averageRating: '', totalReviews: '', profileViews: '', phoneClicks: '', websiteClicks: '', routeRequests: '' });
 
-  // Modals
-  const [showReview, setShowReview] = useState(false);
-  const [reviewForm, setReviewForm] = useState({ author: '', rating: '5', text: '' });
   const [showPost, setShowPost] = useState(false);
   const [postForm, setPostForm] = useState({ imageUrl: '', text: '' });
   const [showReport, setShowReport] = useState(false);
@@ -41,7 +38,6 @@ const ProfileDetail = () => {
 
   const latest = getLatestMetrics(id!);
   const previous = getPreviousMetrics(id!);
-  const reviews = getReviews().filter(r => r.profileId === id);
   const posts = getPosts().filter(p => p.profileId === id);
   const reports = getReports().filter(r => r.profileId === id);
   const updates = getUpdates().filter(u => u.profileId === id);
@@ -61,17 +57,6 @@ const ProfileDetail = () => {
     addHistory(id!, 'Métricas atualizadas');
     setShowMetrics(false);
     toast.success('Métricas atualizadas!');
-    refresh();
-  };
-
-  const handleAddReview = () => {
-    const all = getReviews();
-    all.unshift({ id: crypto.randomUUID(), profileId: id!, author: reviewForm.author, rating: parseInt(reviewForm.rating), text: reviewForm.text, date: new Date().toISOString().split('T')[0] });
-    setReviews(all);
-    addHistory(id!, `Avaliação de ${reviewForm.author} adicionada`);
-    setShowReview(false);
-    setReviewForm({ author: '', rating: '5', text: '' });
-    toast.success('Avaliação adicionada!');
     refresh();
   };
 
@@ -144,7 +129,6 @@ const ProfileDetail = () => {
       <Tabs defaultValue="dashboard">
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="reviews">Avaliações</TabsTrigger>
           <TabsTrigger value="posts">Postagens</TabsTrigger>
           <TabsTrigger value="approval">Aprovação</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
@@ -160,7 +144,6 @@ const ProfileDetail = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <MetricCard icon="⭐" label="Nota média" value={latest?.averageRating?.toFixed(1) || '—'} current={latest?.averageRating} previous={previous?.averageRating} />
-            <MetricCard icon="💬" label="Total de avaliações" value={latest?.totalReviews || 0} current={latest?.totalReviews} previous={previous?.totalReviews} />
             <MetricCard icon="📈" label="Visualizações do perfil" value={latest?.profileViews || 0} current={latest?.profileViews} previous={previous?.profileViews} />
             <MetricCard icon="📞" label="Cliques no telefone" value={latest?.phoneClicks || 0} current={latest?.phoneClicks} previous={previous?.phoneClicks} />
             <MetricCard icon="🌐" label="Cliques no site" value={latest?.websiteClicks || 0} current={latest?.websiteClicks} previous={previous?.websiteClicks} />
@@ -172,25 +155,6 @@ const ProfileDetail = () => {
               <span>Próxima atualização daqui a 30 dias</span>
             </div>
           )}
-        </TabsContent>
-
-        {/* REVIEWS */}
-        <TabsContent value="reviews" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => setShowReview(true)} className="gap-2"><Plus className="h-4 w-4" /> Nova Avaliação</Button></div>
-          {reviews.map(r => (
-            <Card key={r.id}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">{r.author}</span>
-                  <div className="flex gap-0.5">{Array.from({ length: r.rating }).map((_, i) => <Star key={i} className="h-4 w-4 fill-primary text-primary" />)}</div>
-                </div>
-                <p className="text-sm text-muted-foreground">{r.text}</p>
-                {r.response && <div className="mt-2 p-2 bg-muted rounded text-sm"><strong>Resposta:</strong> {r.response}</div>}
-                <p className="text-xs text-muted-foreground mt-2">{r.date}</p>
-              </CardContent>
-            </Card>
-          ))}
-          {reviews.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhuma avaliação registrada</p>}
         </TabsContent>
 
         {/* POSTS */}
@@ -321,19 +285,6 @@ const ProfileDetail = () => {
             <div><Label>Rotas solicitadas</Label><Input type="number" value={metricsForm.routeRequests} onChange={e => setMetricsForm(f => ({ ...f, routeRequests: e.target.value }))} /></div>
           </div>
           <DialogFooter><Button onClick={handleAddMetrics}>Salvar</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* REVIEW DIALOG */}
-      <Dialog open={showReview} onOpenChange={setShowReview}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Nova Avaliação</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Autor</Label><Input value={reviewForm.author} onChange={e => setReviewForm(f => ({ ...f, author: e.target.value }))} /></div>
-            <div><Label>Nota</Label><Input type="number" min={1} max={5} value={reviewForm.rating} onChange={e => setReviewForm(f => ({ ...f, rating: e.target.value }))} /></div>
-            <div><Label>Texto</Label><Textarea value={reviewForm.text} onChange={e => setReviewForm(f => ({ ...f, text: e.target.value }))} /></div>
-          </div>
-          <DialogFooter><Button onClick={handleAddReview}>Adicionar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
