@@ -255,7 +255,7 @@ export async function getReports(profileId?: string): Promise<Report[]> {
 
 export async function upsertReport(report: Partial<Report> & { id?: string }): Promise<Report | null> {
   const normalized = normalizeDateFields(report as Record<string, unknown>, ["date"]);
-  return saveById<Report>("reports", normalized as Report);
+  return saveById<Report>("reports", normalized);
 }
 
 export async function deleteReport(id: string) {
