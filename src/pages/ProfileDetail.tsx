@@ -67,81 +67,169 @@ const ProfileDetail = () => {
   if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
   if (!profile) return <div className="p-8 text-center text-muted-foreground">Perfil não encontrado</div>;
 
+  const getErrorMessage = (error: unknown) => {
+    if (error && typeof error === 'object' && 'message' in error) {
+      return String((error as { message?: unknown }).message || 'Erro ao salvar dados.');
+    }
+    return 'Erro ao salvar dados.';
+  };
+
   // === POSTS ===
   const openEditPost = (p: Post) => { setPostForm({ image_url: p.image_url, text: p.text }); setEditingPostId(p.id); setShowPost(true); };
   const handleSavePost = async () => {
-    if (editingPostId) {
-      await upsertPost({ id: editingPostId, profile_id: id!, ...postForm });
-      await addHistory(id!, 'Post editado');
-      toast.success('Post atualizado!');
-    } else {
-      await upsertPost({ profile_id: id!, image_url: postForm.image_url, text: postForm.text, status: 'pending' });
-      await addHistory(id!, 'Novo post criado para aprovação');
-      toast.success('Post criado!');
+    try {
+      if (editingPostId) {
+        await upsertPost({ id: editingPostId, profile_id: id!, ...postForm });
+        await addHistory(id!, 'Post editado');
+        toast.success('Post atualizado!');
+      } else {
+        await upsertPost({ profile_id: id!, image_url: postForm.image_url, text: postForm.text, status: 'pending' });
+        await addHistory(id!, 'Novo post criado para aprovação');
+        toast.success('Post criado!');
+      }
+
+      setShowPost(false);
+      setEditingPostId(null);
+      setPostForm({ image_url: '', text: '' });
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
-    setShowPost(false); setEditingPostId(null); setPostForm({ image_url: '', text: '' }); load();
   };
-  const handleDeletePost = async (postId: string) => { await deletePostApi(postId); await addHistory(id!, 'Post excluído'); toast.success('Post excluído!'); load(); };
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await deletePostApi(postId);
+      await addHistory(id!, 'Post excluído');
+      toast.success('Post excluído!');
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
   const handlePostAction = async (postId: string, action: 'approved' | 'rejected') => {
-    await upsertPost({ id: postId, profile_id: id!, status: action });
-    await addHistory(id!, `Post ${action === 'approved' ? 'aprovado' : 'rejeitado'}`);
-    toast.success(action === 'approved' ? 'Post aprovado!' : 'Post rejeitado');
-    load();
+    try {
+      await upsertPost({ id: postId, profile_id: id!, status: action });
+      await addHistory(id!, `Post ${action === 'approved' ? 'aprovado' : 'rejeitado'}`);
+      toast.success(action === 'approved' ? 'Post aprovado!' : 'Post rejeitado');
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
 
   // === REPORTS ===
   const openEditReport = (r: Report) => { setReportForm({ link: r.link || '', comment: r.comment, date: r.date }); setEditingReportId(r.id); setShowReport(true); };
   const handleSaveReport = async () => {
-    if (editingReportId) {
-      await upsertReport({ id: editingReportId, profile_id: id!, ...reportForm });
-      await addHistory(id!, 'Relatório editado');
-      toast.success('Relatório atualizado!');
-    } else {
-      await upsertReport({ profile_id: id!, link: reportForm.link, comment: reportForm.comment, date: reportForm.date || new Date().toISOString().split('T')[0] });
-      await addHistory(id!, 'Relatório adicionado');
-      toast.success('Relatório adicionado!');
+    try {
+      if (editingReportId) {
+        await upsertReport({ id: editingReportId, profile_id: id!, link: reportForm.link || null, comment: reportForm.comment, date: reportForm.date || undefined });
+        await addHistory(id!, 'Relatório editado');
+        toast.success('Relatório atualizado!');
+      } else {
+        await upsertReport({ profile_id: id!, link: reportForm.link || null, comment: reportForm.comment, date: reportForm.date || undefined });
+        await addHistory(id!, 'Relatório adicionado');
+        toast.success('Relatório adicionado!');
+      }
+
+      setShowReport(false);
+      setEditingReportId(null);
+      setReportForm({ link: '', comment: '', date: '' });
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
-    setShowReport(false); setEditingReportId(null); setReportForm({ link: '', comment: '', date: '' }); load();
   };
-  const handleDeleteReport = async (reportId: string) => { await deleteReportApi(reportId); await addHistory(id!, 'Relatório excluído'); toast.success('Relatório excluído!'); load(); };
+  const handleDeleteReport = async (reportId: string) => {
+    try {
+      await deleteReportApi(reportId);
+      await addHistory(id!, 'Relatório excluído');
+      toast.success('Relatório excluído!');
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
 
   // === UPDATES ===
   const openEditUpdate = (u: ProfileUpdate) => { setUpdateForm({ description: u.description, responsible: u.responsible }); setEditingUpdateId(u.id); setShowUpdate(true); };
   const handleSaveUpdate = async () => {
-    if (editingUpdateId) {
-      await upsertUpdate({ id: editingUpdateId, profile_id: id!, ...updateForm });
-      await addHistory(id!, 'Atualização editada');
-      toast.success('Atualização atualizada!');
-    } else {
-      await upsertUpdate({ profile_id: id!, description: updateForm.description, date: new Date().toISOString().split('T')[0], responsible: updateForm.responsible });
-      await addHistory(id!, `Atualização: ${updateForm.description}`);
-      toast.success('Atualização registrada!');
+    try {
+      if (editingUpdateId) {
+        await upsertUpdate({ id: editingUpdateId, profile_id: id!, ...updateForm });
+        await addHistory(id!, 'Atualização editada');
+        toast.success('Atualização atualizada!');
+      } else {
+        await upsertUpdate({ profile_id: id!, description: updateForm.description, date: new Date().toISOString().split('T')[0], responsible: updateForm.responsible });
+        await addHistory(id!, `Atualização: ${updateForm.description}`);
+        toast.success('Atualização registrada!');
+      }
+
+      setShowUpdate(false);
+      setEditingUpdateId(null);
+      setUpdateForm({ description: '', responsible: '' });
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
-    setShowUpdate(false); setEditingUpdateId(null); setUpdateForm({ description: '', responsible: '' }); load();
   };
-  const handleDeleteUpdate = async (updateId: string) => { await deleteUpdateApi(updateId); await addHistory(id!, 'Atualização excluída'); toast.success('Atualização excluída!'); load(); };
+  const handleDeleteUpdate = async (updateId: string) => {
+    try {
+      await deleteUpdateApi(updateId);
+      await addHistory(id!, 'Atualização excluída');
+      toast.success('Atualização excluída!');
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
 
   // === TASKS ===
   const openEditTask = (t: Task) => { setTaskForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status }); setEditingTaskId(t.id); setShowTask(true); };
   const handleSaveTask = async () => {
-    if (editingTaskId) {
-      await upsertTask({ id: editingTaskId, profile_id: id!, ...taskForm });
-      await addHistory(id!, `Tarefa editada: ${taskForm.title}`);
-      toast.success('Tarefa atualizada!');
-    } else {
-      await upsertTask({ profile_id: id!, ...taskForm });
-      await addHistory(id!, `Tarefa criada: ${taskForm.title}`);
-      toast.success('Tarefa criada!');
+    if (!taskForm.title.trim()) {
+      toast.error('Informe o título da tarefa.');
+      return;
     }
-    setShowTask(false); setEditingTaskId(null); setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' }); load();
+
+    try {
+      if (editingTaskId) {
+        await upsertTask({ id: editingTaskId, profile_id: id!, ...taskForm, date: taskForm.date || undefined });
+        await addHistory(id!, `Tarefa editada: ${taskForm.title}`);
+        toast.success('Tarefa atualizada!');
+      } else {
+        await upsertTask({ profile_id: id!, ...taskForm, date: taskForm.date || undefined });
+        await addHistory(id!, `Tarefa criada: ${taskForm.title}`);
+        toast.success('Tarefa criada!');
+      }
+
+      setShowTask(false);
+      setEditingTaskId(null);
+      setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' });
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
-  const handleDeleteTask = async (taskId: string) => { await deleteTaskApi(taskId); await addHistory(id!, 'Tarefa excluída'); toast.success('Tarefa excluída!'); load(); };
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTaskApi(taskId);
+      await addHistory(id!, 'Tarefa excluída');
+      toast.success('Tarefa excluída!');
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
 
   const handleTaskStatus = async (task: Task, status: string) => {
-    await upsertTask({ id: task.id, profile_id: id!, status });
-    await addHistory(id!, `Tarefa "${task.title}" → ${status}`);
-    toast.success('Status atualizado!');
-    load();
+    try {
+      await upsertTask({ id: task.id, profile_id: id!, status });
+      await addHistory(id!, `Tarefa "${task.title}" → ${status}`);
+      toast.success('Status atualizado!');
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
 
   const ActionButtons = ({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) => (

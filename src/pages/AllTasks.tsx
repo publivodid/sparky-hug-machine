@@ -30,10 +30,21 @@ const AllTasks = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  const getErrorMessage = (error: unknown) => {
+    if (error && typeof error === 'object' && 'message' in error) {
+      return String((error as { message?: unknown }).message || 'Erro ao salvar dados.');
+    }
+    return 'Erro ao salvar dados.';
+  };
+
   const handleStatus = async (task: Task, status: string) => {
-    await upsertTask({ id: task.id, profile_id: task.profile_id, status });
-    toast.success('Status atualizado!');
-    load();
+    try {
+      await upsertTask({ id: task.id, profile_id: task.profile_id, status });
+      toast.success('Status atualizado!');
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
 
   const openEdit = (t: Task) => {
@@ -44,19 +55,32 @@ const AllTasks = () => {
 
   const handleSave = async () => {
     if (!editingTask) return;
-    await upsertTask({ id: editingTask.id, profile_id: editingTask.profile_id, ...form });
-    await addHistory(editingTask.profile_id, `Tarefa editada: ${form.title}`);
-    toast.success('Tarefa atualizada!');
-    setShowEdit(false);
-    setEditingTask(null);
-    load();
+    if (!form.title.trim()) {
+      toast.error('Informe o título da tarefa.');
+      return;
+    }
+
+    try {
+      await upsertTask({ id: editingTask.id, profile_id: editingTask.profile_id, ...form, date: form.date || undefined });
+      await addHistory(editingTask.profile_id, `Tarefa editada: ${form.title}`);
+      toast.success('Tarefa atualizada!');
+      setShowEdit(false);
+      setEditingTask(null);
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
 
   const handleDelete = async (task: Task) => {
-    await addHistory(task.profile_id, 'Tarefa excluída');
-    await deleteTaskApi(task.id);
-    toast.success('Tarefa excluída!');
-    load();
+    try {
+      await addHistory(task.profile_id, 'Tarefa excluída');
+      await deleteTaskApi(task.id);
+      toast.success('Tarefa excluída!');
+      await load();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
 
   const profileName = (profileId: string) => profiles.find(p => p.id === profileId)?.name || '—';
