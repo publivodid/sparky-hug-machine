@@ -129,7 +129,6 @@ const Profiles = () => {
                 </div>
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" /> {p.city}</div>
-                  <div className="flex items-center gap-2"><Star className="h-3.5 w-3.5" /> {m?.averageRating?.toFixed(1) || '—'} ({m?.totalReviews || 0} avaliações)</div>
                   <div className="flex items-center gap-2"><User className="h-3.5 w-3.5" /> {p.responsible}</div>
                 </div>
               </CardContent>
