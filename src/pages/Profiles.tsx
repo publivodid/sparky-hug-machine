@@ -136,6 +136,9 @@ const Profiles = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={e => openEdit(p.id, e as unknown as React.MouseEvent)}>
+                        <Pencil className="h-4 w-4 mr-2" /> Editar
+                      </DropdownMenuItem>
                       {isArchived ? (
                         <DropdownMenuItem onClick={e => handleRestore(p.id, e as unknown as React.MouseEvent)}>
                           <ArchiveRestore className="h-4 w-4 mr-2" /> Restaurar
