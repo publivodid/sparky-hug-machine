@@ -235,23 +235,8 @@ const ProfileDetail = () => {
         </TabsContent>
       </Tabs>
 
-      {/* METRICS DIALOG */}
-      <Dialog open={showMetrics} onOpenChange={setShowMetrics}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Atualizar Métricas do Mês</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Mês</Label><Input type="number" min={1} max={12} value={metricsForm.month} onChange={e => setMetricsForm(f => ({ ...f, month: e.target.value }))} /></div>
-            <div><Label>Ano</Label><Input type="number" value={metricsForm.year} onChange={e => setMetricsForm(f => ({ ...f, year: e.target.value }))} /></div>
-            <div><Label>Nota média</Label><Input type="number" step="0.1" value={metricsForm.averageRating} onChange={e => setMetricsForm(f => ({ ...f, averageRating: e.target.value }))} /></div>
-            <div><Label>Total avaliações</Label><Input type="number" value={metricsForm.totalReviews} onChange={e => setMetricsForm(f => ({ ...f, totalReviews: e.target.value }))} /></div>
-            <div><Label>Visualizações</Label><Input type="number" value={metricsForm.profileViews} onChange={e => setMetricsForm(f => ({ ...f, profileViews: e.target.value }))} /></div>
-            <div><Label>Cliques telefone</Label><Input type="number" value={metricsForm.phoneClicks} onChange={e => setMetricsForm(f => ({ ...f, phoneClicks: e.target.value }))} /></div>
-            <div><Label>Cliques site</Label><Input type="number" value={metricsForm.websiteClicks} onChange={e => setMetricsForm(f => ({ ...f, websiteClicks: e.target.value }))} /></div>
-            <div><Label>Rotas solicitadas</Label><Input type="number" value={metricsForm.routeRequests} onChange={e => setMetricsForm(f => ({ ...f, routeRequests: e.target.value }))} /></div>
-          </div>
-          <DialogFooter><Button onClick={handleAddMetrics}>Salvar</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+
 
       {/* POST DIALOG */}
       <Dialog open={showPost} onOpenChange={setShowPost}>
