@@ -32,6 +32,10 @@ const ProfileDetail = () => {
   const [updates, setUpdates] = useState<ProfileUpdate[]>([]);
   const [tasks, setTasksState] = useState<Task[]>([]);
   const [history, setHistoryState] = useState<HistoryEntry[]>([]);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+  const [companyDesc, setCompanyDesc] = useState('');
+  const [companyMaterials, setCompanyMaterials] = useState<CompanyMaterial[]>([]);
+  const [materialForm, setMaterialForm] = useState({ label: '', url: '' });
   const [loading, setLoading] = useState(true);
 
   const [showPost, setShowPost] = useState(false);
