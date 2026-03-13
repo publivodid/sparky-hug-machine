@@ -18,6 +18,7 @@ const Profiles = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', category: '', city: '', responsible: '' });
 
   const activeProfiles = profiles.filter(p => p.status !== 'archived');
