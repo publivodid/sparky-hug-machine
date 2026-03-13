@@ -334,3 +334,45 @@ export async function addHistory(profileId: string, action: string) {
 export async function deleteHistory(id: string) {
   await removeById("history", id);
 }
+
+// === COMPANY INFO ===
+export async function getCompanyInfo(profileId: string): Promise<CompanyInfo | null> {
+  const data = await runQuery<CompanyInfo | null>(
+    supabase
+      .from("company_info")
+      .select("*")
+      .eq("profile_id", profileId)
+      .maybeSingle() as PromiseLike<{ data: CompanyInfo | null; error: unknown }>,
+  );
+  return data || null;
+}
+
+export async function upsertCompanyInfo(info: Partial<CompanyInfo> & { profile_id: string }): Promise<CompanyInfo | null> {
+  return saveById<CompanyInfo>("company_info", info);
+}
+
+// === COMPANY MATERIALS ===
+export async function getCompanyMaterials(profileId: string): Promise<CompanyMaterial[]> {
+  const data = await runQuery<CompanyMaterial[]>(
+    supabase
+      .from("company_materials")
+      .select("*")
+      .eq("profile_id", profileId)
+      .order("created_at", { ascending: false }) as PromiseLike<{ data: CompanyMaterial[]; error: unknown }>,
+  );
+  return data || [];
+}
+
+export async function addCompanyMaterial(material: { profile_id: string; label: string; url: string }): Promise<CompanyMaterial | null> {
+  return runQuery<CompanyMaterial | null>(
+    (supabase as any)
+      .from("company_materials")
+      .insert(material)
+      .select()
+      .single() as PromiseLike<{ data: CompanyMaterial | null; error: unknown }>,
+  );
+}
+
+export async function deleteCompanyMaterial(id: string) {
+  await removeById("company_materials", id);
+}
