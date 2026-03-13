@@ -5,6 +5,7 @@ export interface Profile {
   city: string;
   responsible: string;
   createdAt: string;
+  status?: 'active' | 'archived';
 }
 
 export interface MonthlyMetrics {
