@@ -14,6 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_info: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_info_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_materials: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          profile_id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string
+          profile_id: string
+          url?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          profile_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_materials_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       history: {
         Row: {
           action: string
