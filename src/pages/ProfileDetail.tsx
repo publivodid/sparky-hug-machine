@@ -43,26 +43,8 @@ const ProfileDetail = () => {
   const tasks = getTasks().filter(t => t.profileId === id);
   const history = getHistory().filter(h => h.profileId === id);
 
-  const handleAddMetrics = () => {
-    if (!metricsForm.month || !metricsForm.year) {
-      toast.error('Preencha mês e ano');
-      return;
-    }
-    const all = getMetrics();
-    all.push({
-      id: crypto.randomUUID(), profileId: id!,
-      month: parseInt(metricsForm.month), year: parseInt(metricsForm.year),
-      averageRating: parseFloat(metricsForm.averageRating) || 0, totalReviews: parseInt(metricsForm.totalReviews) || 0,
-      profileViews: parseInt(metricsForm.profileViews) || 0, phoneClicks: parseInt(metricsForm.phoneClicks) || 0,
-      websiteClicks: parseInt(metricsForm.websiteClicks) || 0, routeRequests: parseInt(metricsForm.routeRequests) || 0,
-    });
-    setMetrics(all);
-    addHistory(id!, 'Métricas atualizadas');
-    setShowMetrics(false);
-    setMetricsForm({ month: String(now.getMonth() + 1), year: String(now.getFullYear()), averageRating: '', totalReviews: '', profileViews: '', phoneClicks: '', websiteClicks: '', routeRequests: '' });
-    toast.success('Métricas atualizadas!');
-    refresh();
-  };
+
+
 
   const handleAddPost = () => {
     const all = getPosts();
