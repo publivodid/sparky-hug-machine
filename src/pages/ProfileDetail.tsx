@@ -112,9 +112,8 @@ const ProfileDetail = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="dashboard">
+      <Tabs defaultValue="posts">
         <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="posts">Postagens</TabsTrigger>
           <TabsTrigger value="approval">Aprovação</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
@@ -122,26 +121,6 @@ const ProfileDetail = () => {
           <TabsTrigger value="tasks">Tarefas</TabsTrigger>
           <TabsTrigger value="history">Histórico</TabsTrigger>
         </TabsList>
-
-        {/* DASHBOARD */}
-        <TabsContent value="dashboard" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setShowMetrics(true)} className="gap-2"><Plus className="h-4 w-4" /> Atualizar métricas</Button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <MetricCard icon="⭐" label="Nota média" value={latest?.averageRating?.toFixed(1) || '—'} current={latest?.averageRating} previous={previous?.averageRating} />
-            <MetricCard icon="📈" label="Visualizações do perfil" value={latest?.profileViews || 0} current={latest?.profileViews} previous={previous?.profileViews} />
-            <MetricCard icon="📞" label="Cliques no telefone" value={latest?.phoneClicks || 0} current={latest?.phoneClicks} previous={previous?.phoneClicks} />
-            <MetricCard icon="🌐" label="Cliques no site" value={latest?.websiteClicks || 0} current={latest?.websiteClicks} previous={previous?.websiteClicks} />
-            <MetricCard icon="📍" label="Rotas solicitadas" value={latest?.routeRequests || 0} current={latest?.routeRequests} previous={previous?.routeRequests} />
-          </div>
-          {latest && (
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-              <span>📅 Métrica atualizada mês — {String(latest.month).padStart(2, '0')}/{String(latest.year).slice(-2)}</span>
-              <span>Próxima atualização daqui a 30 dias</span>
-            </div>
-          )}
-        </TabsContent>
 
         {/* POSTS */}
         <TabsContent value="posts" className="space-y-4">
