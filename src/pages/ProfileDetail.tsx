@@ -259,8 +259,9 @@ const ProfileDetail = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="posts">
+      <Tabs defaultValue="company">
         <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="company">Informações da Empresa</TabsTrigger>
           <TabsTrigger value="posts">Postagens</TabsTrigger>
           <TabsTrigger value="approval">Aprovação</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
@@ -268,6 +269,80 @@ const ProfileDetail = () => {
           <TabsTrigger value="tasks">Tarefas</TabsTrigger>
           <TabsTrigger value="history">Histórico</TabsTrigger>
         </TabsList>
+
+        {/* COMPANY INFO */}
+        <TabsContent value="company" className="space-y-6">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold text-lg">Sobre a Empresa</h3>
+              <Textarea
+                placeholder="Descreva informações sobre a empresa, serviços, diferenciais..."
+                value={companyDesc}
+                onChange={e => setCompanyDesc(e.target.value)}
+                className="min-h-[120px]"
+              />
+              <Button onClick={async () => {
+                try {
+                  await upsertCompanyInfo({ id: companyInfo?.id, profile_id: id!, description: companyDesc });
+                  toast.success('Informações salvas!');
+                  await load();
+                } catch (error) {
+                  toast.error(getErrorMessage(error));
+                }
+              }}>Salvar Descrição</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold text-lg">Materiais da Empresa</h3>
+              <p className="text-sm text-muted-foreground">Links para logo, artes, exemplos, documentos e outros materiais.</p>
+              
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input placeholder="Nome (ex: Logo)" value={materialForm.label} onChange={e => setMaterialForm(f => ({ ...f, label: e.target.value }))} className="sm:w-1/3" />
+                <Input placeholder="URL do material" value={materialForm.url} onChange={e => setMaterialForm(f => ({ ...f, url: e.target.value }))} className="flex-1" />
+                <Button onClick={async () => {
+                  if (!materialForm.label.trim() || !materialForm.url.trim()) {
+                    toast.error('Preencha o nome e a URL.');
+                    return;
+                  }
+                  try {
+                    await addCompanyMaterial({ profile_id: id!, label: materialForm.label, url: materialForm.url });
+                    toast.success('Material adicionado!');
+                    setMaterialForm({ label: '', url: '' });
+                    await load();
+                  } catch (error) {
+                    toast.error(getErrorMessage(error));
+                  }
+                }} className="gap-2"><Plus className="h-4 w-4" /> Adicionar</Button>
+              </div>
+
+              <div className="space-y-2">
+                {companyMaterials.map(m => (
+                  <div key={m.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Link className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm font-medium">{m.label}</span>
+                      <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline truncate flex items-center gap-1">
+                        {m.url} <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive flex-shrink-0" onClick={async () => {
+                      try {
+                        await deleteCompanyMaterial(m.id);
+                        toast.success('Material removido!');
+                        await load();
+                      } catch (error) {
+                        toast.error('Erro ao remover material.');
+                      }
+                    }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                ))}
+                {companyMaterials.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum material adicionado</p>}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* POSTS */}
         <TabsContent value="posts" className="space-y-4">
