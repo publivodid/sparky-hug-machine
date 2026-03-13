@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProfiles, getLatestMetrics, getPreviousMetrics, getMetrics, setMetrics, getPosts, setPosts, getReports, setReports, getUpdates, setUpdates, getTasks, setTasks, getHistory, addHistory } from "@/lib/data";
+import { getProfiles, getPosts, setPosts, getReports, setReports, getUpdates, setUpdates, getTasks, setTasks, getHistory, addHistory } from "@/lib/data";
 import type { Post, Report, ProfileUpdate, Task } from "@/lib/data";
-import { MetricCard } from "@/components/MetricCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
