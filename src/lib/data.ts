@@ -120,7 +120,7 @@ const normalizeDateFields = <T extends Record<string, unknown>>(payload: T, date
 
 const saveById = async <T>(
   table: TableName,
-  payload: { id?: string } & Record<string, unknown>,
+  payload: any,
 ): Promise<T | null> => {
   const normalized = normalizeDateFields(payload);
   const { id, ...rest } = normalized;
