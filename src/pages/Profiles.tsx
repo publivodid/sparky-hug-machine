@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProfiles, setProfiles, addHistory, getTasks, setTasks } from "@/lib/data";
+import { getProfiles, upsertProfile, deleteProfile as deleteProfileApi, getTasks, deleteTask, addHistory } from "@/lib/data";
+import type { Profile } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,18 +9,27 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, MapPin, User, ExternalLink, MoreVertical, Trash2, Archive, ArchiveRestore, Pencil } from "lucide-react";
+import { Plus, Search, MapPin, User, MoreVertical, Trash2, Archive, ArchiveRestore, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 const Profiles = () => {
   const navigate = useNavigate();
-  const [profiles, setLocalProfiles] = useState(getProfiles());
+  const [profiles, setLocalProfiles] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', category: '', city: '', responsible: '' });
+
+  const load = useCallback(async () => {
+    const p = await getProfiles();
+    setLocalProfiles(p);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const activeProfiles = profiles.filter(p => p.status !== 'archived');
   const archivedProfiles = profiles.filter(p => p.status === 'archived');
@@ -29,16 +39,14 @@ const Profiles = () => {
     p.city.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.name) return;
-    const newProfile = { ...form, id: crypto.randomUUID(), createdAt: new Date().toISOString().split('T')[0], status: 'active' as const };
-    const updated = [...profiles, newProfile];
-    setProfiles(updated);
-    setLocalProfiles(updated);
-    addHistory(newProfile.id, `Perfil "${form.name}" criado`);
+    const result = await upsertProfile({ name: form.name, category: form.category, city: form.city, responsible: form.responsible, status: 'active' });
+    if (result) await addHistory(result.id, `Perfil "${form.name}" criado`);
     setForm({ name: '', category: '', city: '', responsible: '' });
     setShowAdd(false);
     toast.success('Perfil criado!');
+    load();
   };
 
   const openEdit = (id: string, e: React.MouseEvent) => {
@@ -50,48 +58,43 @@ const Profiles = () => {
     }
   };
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (!editTarget || !form.name) return;
-    const updated = profiles.map(p => p.id === editTarget ? { ...p, ...form } : p);
-    setProfiles(updated);
-    setLocalProfiles(updated);
-    addHistory(editTarget, `Perfil editado`);
+    await upsertProfile({ id: editTarget, ...form });
+    await addHistory(editTarget, `Perfil editado`);
     setEditTarget(null);
     setForm({ name: '', category: '', city: '', responsible: '' });
     toast.success('Perfil atualizado!');
+    load();
   };
 
-  const handleArchive = (id: string, e: React.MouseEvent) => {
+  const handleArchive = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const updated = profiles.map(p => p.id === id ? { ...p, status: 'archived' as const } : p);
-    setProfiles(updated);
-    setLocalProfiles(updated);
-    addHistory(id, 'Perfil arquivado');
+    await upsertProfile({ id, status: 'archived' });
+    await addHistory(id, 'Perfil arquivado');
     toast.success('Perfil arquivado!');
+    load();
   };
 
-  const handleRestore = (id: string, e: React.MouseEvent) => {
+  const handleRestore = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const updated = profiles.map(p => p.id === id ? { ...p, status: 'active' as const } : p);
-    setProfiles(updated);
-    setLocalProfiles(updated);
-    addHistory(id, 'Perfil restaurado');
+    await upsertProfile({ id, status: 'active' });
+    await addHistory(id, 'Perfil restaurado');
     toast.success('Perfil restaurado!');
+    load();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
     const name = profiles.find(p => p.id === deleteTarget)?.name;
-    const updated = profiles.filter(p => p.id !== deleteTarget);
-    setProfiles(updated);
-    setLocalProfiles(updated);
-    // Remove tasks of deleted profile
-    const remainingTasks = getTasks().filter(t => t.profileId !== deleteTarget);
-    setTasks(remainingTasks);
-    addHistory(deleteTarget, `Perfil "${name}" excluído`);
+    await addHistory(deleteTarget, `Perfil "${name}" excluído`);
+    await deleteProfileApi(deleteTarget);
     setDeleteTarget(null);
     toast.success('Perfil excluído!');
+    load();
   };
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
 
   return (
     <div className="space-y-6">

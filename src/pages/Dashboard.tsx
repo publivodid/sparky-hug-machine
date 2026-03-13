@@ -1,20 +1,36 @@
-import { getProfiles, getMetrics, getPosts, getTasks, getReports } from "@/lib/data";
+import { useState, useEffect } from "react";
+import { getProfiles, getPosts, getTasks, getReports } from "@/lib/data";
+import type { Profile, Post, Task, Report } from "@/lib/data";
 import { MetricCard } from "@/components/MetricCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
-  const profiles = getProfiles();
-  const activeIds = new Set(profiles.filter(p => p.status !== 'archived').map(p => p.id));
-  const metrics = getMetrics();
-  const posts = getPosts();
-  const tasks = getTasks().filter(t => activeIds.has(t.profileId));
-  const reports = getReports();
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      const [p, po, t, r] = await Promise.all([getProfiles(), getPosts(), getTasks(), getReports()]);
+      setProfiles(p);
+      setPosts(po);
+      const activeIds = new Set(p.filter(pr => pr.status !== 'archived').map(pr => pr.id));
+      setTasks(t.filter(tk => activeIds.has(tk.profile_id)));
+      setReports(r);
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const postsThisMonth = posts.filter(p => {
-    const d = new Date(p.createdAt);
+    const d = new Date(p.created_at);
     return d.getMonth() + 1 === currentMonth;
   }).length;
 

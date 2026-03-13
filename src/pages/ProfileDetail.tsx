@@ -1,7 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProfiles, getPosts, setPosts, getReports, setReports, getUpdates, setUpdates, getTasks, setTasks, getHistory, addHistory } from "@/lib/data";
-import type { Post, Report, ProfileUpdate, Task } from "@/lib/data";
+import {
+  getProfiles, getPosts, upsertPost, deletePost as deletePostApi,
+  getReports, upsertReport, deleteReport as deleteReportApi,
+  getUpdates, upsertUpdate, deleteUpdate as deleteUpdateApi,
+  getTasks, upsertTask, deleteTask as deleteTaskApi,
+  getHistory, addHistory
+} from "@/lib/data";
+import type { Profile, Post, Report, ProfileUpdate, Task, HistoryEntry } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,13 +23,18 @@ import { toast } from "sonner";
 const ProfileDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const profile = getProfiles().find(p => p.id === id);
-  const [, setRefresh] = useState(0);
-  const refresh = () => setRefresh(n => n + 1);
+
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [updates, setUpdates] = useState<ProfileUpdate[]>([]);
+  const [tasks, setTasksState] = useState<Task[]>([]);
+  const [history, setHistoryState] = useState<HistoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [showPost, setShowPost] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [postForm, setPostForm] = useState({ imageUrl: '', text: '' });
+  const [postForm, setPostForm] = useState({ image_url: '', text: '' });
 
   const [showReport, setShowReport] = useState(false);
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
@@ -35,86 +46,102 @@ const ProfileDetail = () => {
 
   const [showTask, setShowTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [taskForm, setTaskForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as Task['status'] });
+  const [taskForm, setTaskForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string });
 
+  const load = useCallback(async () => {
+    if (!id) return;
+    const [allProfiles, po, re, up, ta, hi] = await Promise.all([
+      getProfiles(), getPosts(id), getReports(id), getUpdates(id), getTasks(id), getHistory(id)
+    ]);
+    setProfile(allProfiles.find(p => p.id === id) || null);
+    setPosts(po);
+    setReports(re);
+    setUpdates(up);
+    setTasksState(ta);
+    setHistoryState(hi);
+    setLoading(false);
+  }, [id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
   if (!profile) return <div className="p-8 text-center text-muted-foreground">Perfil não encontrado</div>;
 
-  const posts = getPosts().filter(p => p.profileId === id);
-  const reports = getReports().filter(r => r.profileId === id);
-  const updates = getUpdates().filter(u => u.profileId === id);
-  const tasks = getTasks().filter(t => t.profileId === id);
-  const history = getHistory().filter(h => h.profileId === id);
-
   // === POSTS ===
-  const openEditPost = (p: Post) => { setPostForm({ imageUrl: p.imageUrl, text: p.text }); setEditingPostId(p.id); setShowPost(true); };
-  const handleSavePost = () => {
-    const all = getPosts();
+  const openEditPost = (p: Post) => { setPostForm({ image_url: p.image_url, text: p.text }); setEditingPostId(p.id); setShowPost(true); };
+  const handleSavePost = async () => {
     if (editingPostId) {
-      const idx = all.findIndex(p => p.id === editingPostId);
-      if (idx !== -1) { all[idx] = { ...all[idx], ...postForm }; setPosts(all); addHistory(id!, 'Post editado'); toast.success('Post atualizado!'); }
+      await upsertPost({ id: editingPostId, profile_id: id!, ...postForm });
+      await addHistory(id!, 'Post editado');
+      toast.success('Post atualizado!');
     } else {
-      all.unshift({ id: crypto.randomUUID(), profileId: id!, imageUrl: postForm.imageUrl, text: postForm.text, status: 'pending', createdAt: new Date().toISOString().split('T')[0] });
-      setPosts(all); addHistory(id!, 'Novo post criado para aprovação'); toast.success('Post criado!');
+      await upsertPost({ profile_id: id!, image_url: postForm.image_url, text: postForm.text, status: 'pending' });
+      await addHistory(id!, 'Novo post criado para aprovação');
+      toast.success('Post criado!');
     }
-    setShowPost(false); setEditingPostId(null); setPostForm({ imageUrl: '', text: '' }); refresh();
+    setShowPost(false); setEditingPostId(null); setPostForm({ image_url: '', text: '' }); load();
   };
-  const handleDeletePost = (postId: string) => { setPosts(getPosts().filter(p => p.id !== postId)); addHistory(id!, 'Post excluído'); toast.success('Post excluído!'); refresh(); };
-
-  const handlePostAction = (postId: string, action: 'approved' | 'rejected') => {
-    const all = getPosts();
-    const idx = all.findIndex(p => p.id === postId);
-    if (idx !== -1) { all[idx].status = action; setPosts(all); addHistory(id!, `Post ${action === 'approved' ? 'aprovado' : 'rejeitado'}`); toast.success(action === 'approved' ? 'Post aprovado!' : 'Post rejeitado'); refresh(); }
+  const handleDeletePost = async (postId: string) => { await deletePostApi(postId); await addHistory(id!, 'Post excluído'); toast.success('Post excluído!'); load(); };
+  const handlePostAction = async (postId: string, action: 'approved' | 'rejected') => {
+    await upsertPost({ id: postId, profile_id: id!, status: action });
+    await addHistory(id!, `Post ${action === 'approved' ? 'aprovado' : 'rejeitado'}`);
+    toast.success(action === 'approved' ? 'Post aprovado!' : 'Post rejeitado');
+    load();
   };
 
   // === REPORTS ===
   const openEditReport = (r: Report) => { setReportForm({ link: r.link || '', comment: r.comment, date: r.date }); setEditingReportId(r.id); setShowReport(true); };
-  const handleSaveReport = () => {
-    const all = getReports();
+  const handleSaveReport = async () => {
     if (editingReportId) {
-      const idx = all.findIndex(r => r.id === editingReportId);
-      if (idx !== -1) { all[idx] = { ...all[idx], ...reportForm }; setReports(all); addHistory(id!, 'Relatório editado'); toast.success('Relatório atualizado!'); }
+      await upsertReport({ id: editingReportId, profile_id: id!, ...reportForm });
+      await addHistory(id!, 'Relatório editado');
+      toast.success('Relatório atualizado!');
     } else {
-      all.unshift({ id: crypto.randomUUID(), profileId: id!, link: reportForm.link, comment: reportForm.comment, date: reportForm.date || new Date().toISOString().split('T')[0] });
-      setReports(all); addHistory(id!, 'Relatório adicionado'); toast.success('Relatório adicionado!');
+      await upsertReport({ profile_id: id!, link: reportForm.link, comment: reportForm.comment, date: reportForm.date || new Date().toISOString().split('T')[0] });
+      await addHistory(id!, 'Relatório adicionado');
+      toast.success('Relatório adicionado!');
     }
-    setShowReport(false); setEditingReportId(null); setReportForm({ link: '', comment: '', date: '' }); refresh();
+    setShowReport(false); setEditingReportId(null); setReportForm({ link: '', comment: '', date: '' }); load();
   };
-  const handleDeleteReport = (reportId: string) => { setReports(getReports().filter(r => r.id !== reportId)); addHistory(id!, 'Relatório excluído'); toast.success('Relatório excluído!'); refresh(); };
+  const handleDeleteReport = async (reportId: string) => { await deleteReportApi(reportId); await addHistory(id!, 'Relatório excluído'); toast.success('Relatório excluído!'); load(); };
 
   // === UPDATES ===
   const openEditUpdate = (u: ProfileUpdate) => { setUpdateForm({ description: u.description, responsible: u.responsible }); setEditingUpdateId(u.id); setShowUpdate(true); };
-  const handleSaveUpdate = () => {
-    const all = getUpdates();
+  const handleSaveUpdate = async () => {
     if (editingUpdateId) {
-      const idx = all.findIndex(u => u.id === editingUpdateId);
-      if (idx !== -1) { all[idx] = { ...all[idx], ...updateForm }; setUpdates(all); addHistory(id!, 'Atualização editada'); toast.success('Atualização atualizada!'); }
+      await upsertUpdate({ id: editingUpdateId, profile_id: id!, ...updateForm });
+      await addHistory(id!, 'Atualização editada');
+      toast.success('Atualização atualizada!');
     } else {
-      all.unshift({ id: crypto.randomUUID(), profileId: id!, description: updateForm.description, date: new Date().toISOString().split('T')[0], responsible: updateForm.responsible });
-      setUpdates(all); addHistory(id!, `Atualização: ${updateForm.description}`); toast.success('Atualização registrada!');
+      await upsertUpdate({ profile_id: id!, description: updateForm.description, date: new Date().toISOString().split('T')[0], responsible: updateForm.responsible });
+      await addHistory(id!, `Atualização: ${updateForm.description}`);
+      toast.success('Atualização registrada!');
     }
-    setShowUpdate(false); setEditingUpdateId(null); setUpdateForm({ description: '', responsible: '' }); refresh();
+    setShowUpdate(false); setEditingUpdateId(null); setUpdateForm({ description: '', responsible: '' }); load();
   };
-  const handleDeleteUpdate = (updateId: string) => { setUpdates(getUpdates().filter(u => u.id !== updateId)); addHistory(id!, 'Atualização excluída'); toast.success('Atualização excluída!'); refresh(); };
+  const handleDeleteUpdate = async (updateId: string) => { await deleteUpdateApi(updateId); await addHistory(id!, 'Atualização excluída'); toast.success('Atualização excluída!'); load(); };
 
   // === TASKS ===
   const openEditTask = (t: Task) => { setTaskForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status }); setEditingTaskId(t.id); setShowTask(true); };
-  const handleSaveTask = () => {
-    const all = getTasks();
+  const handleSaveTask = async () => {
     if (editingTaskId) {
-      const idx = all.findIndex(t => t.id === editingTaskId);
-      if (idx !== -1) { all[idx] = { ...all[idx], ...taskForm }; setTasks(all); addHistory(id!, `Tarefa editada: ${taskForm.title}`); toast.success('Tarefa atualizada!'); }
+      await upsertTask({ id: editingTaskId, profile_id: id!, ...taskForm });
+      await addHistory(id!, `Tarefa editada: ${taskForm.title}`);
+      toast.success('Tarefa atualizada!');
     } else {
-      all.unshift({ id: crypto.randomUUID(), profileId: id!, ...taskForm });
-      setTasks(all); addHistory(id!, `Tarefa criada: ${taskForm.title}`); toast.success('Tarefa criada!');
+      await upsertTask({ profile_id: id!, ...taskForm });
+      await addHistory(id!, `Tarefa criada: ${taskForm.title}`);
+      toast.success('Tarefa criada!');
     }
-    setShowTask(false); setEditingTaskId(null); setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' }); refresh();
+    setShowTask(false); setEditingTaskId(null); setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' }); load();
   };
-  const handleDeleteTask = (taskId: string) => { setTasks(getTasks().filter(t => t.id !== taskId)); addHistory(id!, 'Tarefa excluída'); toast.success('Tarefa excluída!'); refresh(); };
+  const handleDeleteTask = async (taskId: string) => { await deleteTaskApi(taskId); await addHistory(id!, 'Tarefa excluída'); toast.success('Tarefa excluída!'); load(); };
 
-  const handleTaskStatus = (taskId: string, status: Task['status']) => {
-    const all = getTasks();
-    const idx = all.findIndex(t => t.id === taskId);
-    if (idx !== -1) { all[idx].status = status; setTasks(all); addHistory(id!, `Tarefa "${all[idx].title}" → ${status}`); toast.success('Status atualizado!'); refresh(); }
+  const handleTaskStatus = async (task: Task, status: string) => {
+    await upsertTask({ id: task.id, profile_id: id!, status });
+    await addHistory(id!, `Tarefa "${task.title}" → ${status}`);
+    toast.success('Status atualizado!');
+    load();
   };
 
   const ActionButtons = ({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) => (
@@ -146,7 +173,7 @@ const ProfileDetail = () => {
 
         {/* POSTS */}
         <TabsContent value="posts" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => { setEditingPostId(null); setPostForm({ imageUrl: '', text: '' }); setShowPost(true); }} className="gap-2"><Plus className="h-4 w-4" /> Novo Post</Button></div>
+          <div className="flex justify-end"><Button onClick={() => { setEditingPostId(null); setPostForm({ image_url: '', text: '' }); setShowPost(true); }} className="gap-2"><Plus className="h-4 w-4" /> Novo Post</Button></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {posts.map(p => (
               <Card key={p.id}>
@@ -157,7 +184,7 @@ const ProfileDetail = () => {
                     </Badge>
                     <ActionButtons onEdit={() => openEditPost(p)} onDelete={() => handleDeletePost(p.id)} />
                   </div>
-                  {p.imageUrl && <img src={p.imageUrl} alt="" className="w-full h-40 object-cover rounded-lg mb-3" />}
+                  {p.image_url && <img src={p.image_url} alt="" className="w-full h-40 object-cover rounded-lg mb-3" />}
                   <p className="text-sm">{p.text}</p>
                 </CardContent>
               </Card>
@@ -171,7 +198,7 @@ const ProfileDetail = () => {
             <Card key={p.id}>
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row gap-4">
-                  {p.imageUrl && <img src={p.imageUrl} alt="" className="w-full md:w-48 h-32 object-cover rounded-lg" />}
+                  {p.image_url && <img src={p.image_url} alt="" className="w-full md:w-48 h-32 object-cover rounded-lg" />}
                   <div className="flex-1">
                     <p className="text-sm mb-3">{p.text}</p>
                     <Badge variant="secondary" className="mb-3">Pendente</Badge>
@@ -235,7 +262,7 @@ const ProfileDetail = () => {
                     <p className="text-xs text-muted-foreground mt-1">{t.responsible} • {t.date}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Select value={t.status} onValueChange={(v) => handleTaskStatus(t.id, v as Task['status'])}>
+                    <Select value={t.status} onValueChange={(v) => handleTaskStatus(t, v)}>
                       <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">Pendente</SelectItem>
@@ -272,7 +299,7 @@ const ProfileDetail = () => {
         <DialogContent>
           <DialogHeader><DialogTitle>{editingPostId ? 'Editar Post' : 'Novo Post'}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label>URL da imagem</Label><Input value={postForm.imageUrl} onChange={e => setPostForm(f => ({ ...f, imageUrl: e.target.value }))} /></div>
+            <div><Label>URL da imagem</Label><Input value={postForm.image_url} onChange={e => setPostForm(f => ({ ...f, image_url: e.target.value }))} /></div>
             <div><Label>Texto</Label><Textarea value={postForm.text} onChange={e => setPostForm(f => ({ ...f, text: e.target.value }))} /></div>
           </div>
           <DialogFooter><Button onClick={handleSavePost}>{editingPostId ? 'Salvar' : 'Criar'}</Button></DialogFooter>

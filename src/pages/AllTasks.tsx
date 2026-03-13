@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { getTasks, setTasks, getProfiles, addHistory } from "@/lib/data";
-import type { Task } from "@/lib/data";
+import { useState, useEffect, useCallback } from "react";
+import { getTasks, upsertTask, deleteTask as deleteTaskApi, getProfiles, addHistory } from "@/lib/data";
+import type { Task, Profile } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,52 +13,55 @@ import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const AllTasks = () => {
-  const [, setRefresh] = useState(0);
-  const refresh = () => setRefresh(n => n + 1);
-  const profiles = getProfiles();
-  const activeIds = new Set(profiles.filter(p => p.status !== 'archived').map(p => p.id));
-  const tasks = getTasks().filter(t => activeIds.has(t.profileId));
-
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as Task['status'] });
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [form, setForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string });
 
-  const handleStatus = (taskId: string, status: Task['status']) => {
-    const all = getTasks();
-    const idx = all.findIndex(t => t.id === taskId);
-    if (idx !== -1) { all[idx].status = status; setTasks(all); toast.success('Status atualizado!'); refresh(); }
+  const load = useCallback(async () => {
+    const [p, t] = await Promise.all([getProfiles(), getTasks()]);
+    setProfiles(p);
+    const activeIds = new Set(p.filter(pr => pr.status !== 'archived').map(pr => pr.id));
+    setTasks(t.filter(tk => activeIds.has(tk.profile_id)));
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleStatus = async (task: Task, status: string) => {
+    await upsertTask({ id: task.id, profile_id: task.profile_id, status });
+    toast.success('Status atualizado!');
+    load();
   };
 
   const openEdit = (t: Task) => {
     setForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status });
-    setEditingId(t.id);
+    setEditingTask(t);
     setShowEdit(true);
   };
 
-  const handleSave = () => {
-    const all = getTasks();
-    const idx = all.findIndex(t => t.id === editingId);
-    if (idx !== -1) {
-      all[idx] = { ...all[idx], ...form };
-      setTasks(all);
-      addHistory(all[idx].profileId, `Tarefa editada: ${form.title}`);
-      toast.success('Tarefa atualizada!');
-    }
+  const handleSave = async () => {
+    if (!editingTask) return;
+    await upsertTask({ id: editingTask.id, profile_id: editingTask.profile_id, ...form });
+    await addHistory(editingTask.profile_id, `Tarefa editada: ${form.title}`);
+    toast.success('Tarefa atualizada!');
     setShowEdit(false);
-    setEditingId(null);
-    refresh();
+    setEditingTask(null);
+    load();
   };
 
-  const handleDelete = (taskId: string) => {
-    const all = getTasks();
-    const task = all.find(t => t.id === taskId);
-    if (task) addHistory(task.profileId, 'Tarefa excluída');
-    setTasks(all.filter(t => t.id !== taskId));
+  const handleDelete = async (task: Task) => {
+    await addHistory(task.profile_id, 'Tarefa excluída');
+    await deleteTaskApi(task.id);
     toast.success('Tarefa excluída!');
-    refresh();
+    load();
   };
 
   const profileName = (profileId: string) => profiles.find(p => p.id === profileId)?.name || '—';
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
 
   return (
     <div className="space-y-6">
@@ -75,12 +78,12 @@ const AllTasks = () => {
                 <p className="font-medium text-sm">{t.title}</p>
                 <p className="text-xs text-muted-foreground">{t.description}</p>
                 <div className="flex gap-2 mt-1">
-                  <Badge variant="outline" className="text-xs">{profileName(t.profileId)}</Badge>
+                  <Badge variant="outline" className="text-xs">{profileName(t.profile_id)}</Badge>
                   <span className="text-xs text-muted-foreground">{t.responsible} • {t.date}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Select value={t.status} onValueChange={(v) => handleStatus(t.id, v as Task['status'])}>
+                <Select value={t.status} onValueChange={(v) => handleStatus(t, v)}>
                   <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending">Pendente</SelectItem>
@@ -89,7 +92,7 @@ const AllTasks = () => {
                   </SelectContent>
                 </Select>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(t)}><Pencil className="h-3.5 w-3.5" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(t.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(t)}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div>
             </CardContent>
           </Card>
