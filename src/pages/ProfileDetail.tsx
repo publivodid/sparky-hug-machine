@@ -5,9 +5,11 @@ import {
   getReports, upsertReport, deleteReport as deleteReportApi,
   getUpdates, upsertUpdate, deleteUpdate as deleteUpdateApi,
   getTasks, upsertTask, deleteTask as deleteTaskApi,
-  getHistory, addHistory, deleteHistory
+  getHistory, addHistory, deleteHistory,
+  getCompanyInfo, upsertCompanyInfo,
+  getCompanyMaterials, addCompanyMaterial, deleteCompanyMaterial
 } from "@/lib/data";
-import type { Profile, Post, Report, ProfileUpdate, Task, HistoryEntry } from "@/lib/data";
+import type { Profile, Post, Report, ProfileUpdate, Task, HistoryEntry, CompanyInfo, CompanyMaterial } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
