@@ -15,7 +15,8 @@ const statusLabels: Record<Task['status'], string> = {
 const AllTasks = () => {
   const [, setRefresh] = useState(0);
   const profiles = getProfiles();
-  const tasks = getTasks();
+  const activeIds = new Set(profiles.filter(p => p.status !== 'archived').map(p => p.id));
+  const tasks = getTasks().filter(t => activeIds.has(t.profileId));
 
   const handleStatus = (taskId: string, status: Task['status']) => {
     const all = getTasks();

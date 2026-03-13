@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProfiles, setProfiles, addHistory } from "@/lib/data";
+import { getProfiles, setProfiles, addHistory, getTasks, setTasks } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +64,9 @@ const Profiles = () => {
     const updated = profiles.filter(p => p.id !== deleteTarget);
     setProfiles(updated);
     setLocalProfiles(updated);
+    // Remove tasks of deleted profile
+    const remainingTasks = getTasks().filter(t => t.profileId !== deleteTarget);
+    setTasks(remainingTasks);
     addHistory(deleteTarget, `Perfil "${name}" excluído`);
     setDeleteTarget(null);
     toast.success('Perfil excluído!');
