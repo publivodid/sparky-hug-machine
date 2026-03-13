@@ -5,7 +5,7 @@ import {
   getReports, upsertReport, deleteReport as deleteReportApi,
   getUpdates, upsertUpdate, deleteUpdate as deleteUpdateApi,
   getTasks, upsertTask, deleteTask as deleteTaskApi,
-  getHistory, addHistory
+  getHistory, addHistory, deleteHistory
 } from "@/lib/data";
 import type { Profile, Post, Report, ProfileUpdate, Task, HistoryEntry } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
