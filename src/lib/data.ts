@@ -313,3 +313,7 @@ export async function addHistory(profileId: string, action: string) {
       .insert({ profile_id: profileId, action, user: "Equipe" }) as PromiseLike<{ data: unknown; error: unknown }>,
   );
 }
+
+export async function deleteHistory(id: string) {
+  await removeById("history", id);
+}
