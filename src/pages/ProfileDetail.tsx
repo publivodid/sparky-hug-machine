@@ -35,8 +35,8 @@ const ProfileDetail = () => {
 
   if (!profile) return <div className="p-8 text-center text-muted-foreground">Perfil não encontrado</div>;
 
-  const latest = getLatestMetrics(id!);
-  const previous = getPreviousMetrics(id!);
+
+
   const posts = getPosts().filter(p => p.profileId === id);
   const reports = getReports().filter(r => r.profileId === id);
   const updates = getUpdates().filter(u => u.profileId === id);
