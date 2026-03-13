@@ -14,7 +14,296 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      history: {
+        Row: {
+          action: string
+          date: string
+          id: string
+          profile_id: string
+          user: string
+        }
+        Insert: {
+          action: string
+          date?: string
+          id?: string
+          profile_id: string
+          user?: string
+        }
+        Update: {
+          action?: string
+          date?: string
+          id?: string
+          profile_id?: string
+          user?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_metrics: {
+        Row: {
+          average_rating: number
+          id: string
+          month: number
+          phone_clicks: number
+          profile_id: string
+          profile_views: number
+          route_requests: number
+          total_reviews: number
+          website_clicks: number
+          year: number
+        }
+        Insert: {
+          average_rating?: number
+          id?: string
+          month: number
+          phone_clicks?: number
+          profile_id: string
+          profile_views?: number
+          route_requests?: number
+          total_reviews?: number
+          website_clicks?: number
+          year: number
+        }
+        Update: {
+          average_rating?: number
+          id?: string
+          month?: number
+          phone_clicks?: number
+          profile_id?: string
+          profile_views?: number
+          route_requests?: number
+          total_reviews?: number
+          website_clicks?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_metrics_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          client_comment: string | null
+          created_at: string
+          id: string
+          image_url: string
+          profile_id: string
+          status: string
+          text: string
+        }
+        Insert: {
+          client_comment?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          profile_id: string
+          status?: string
+          text?: string
+        }
+        Update: {
+          client_comment?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          profile_id?: string
+          status?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_updates: {
+        Row: {
+          date: string
+          description: string
+          id: string
+          profile_id: string
+          responsible: string
+        }
+        Insert: {
+          date?: string
+          description?: string
+          id?: string
+          profile_id: string
+          responsible?: string
+        }
+        Update: {
+          date?: string
+          description?: string
+          id?: string
+          profile_id?: string
+          responsible?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_updates_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          category: string
+          city: string
+          created_at: string
+          id: string
+          name: string
+          responsible: string
+          status: string
+        }
+        Insert: {
+          category?: string
+          city?: string
+          created_at?: string
+          id?: string
+          name: string
+          responsible?: string
+          status?: string
+        }
+        Update: {
+          category?: string
+          city?: string
+          created_at?: string
+          id?: string
+          name?: string
+          responsible?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          comment: string
+          date: string
+          id: string
+          link: string | null
+          pdf_url: string | null
+          profile_id: string
+        }
+        Insert: {
+          comment?: string
+          date?: string
+          id?: string
+          link?: string | null
+          pdf_url?: string | null
+          profile_id: string
+        }
+        Update: {
+          comment?: string
+          date?: string
+          id?: string
+          link?: string | null
+          pdf_url?: string | null
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          author: string
+          date: string
+          id: string
+          profile_id: string
+          rating: number
+          response: string | null
+          text: string
+        }
+        Insert: {
+          author: string
+          date?: string
+          id?: string
+          profile_id: string
+          rating: number
+          response?: string | null
+          text?: string
+        }
+        Update: {
+          author?: string
+          date?: string
+          id?: string
+          profile_id?: string
+          rating?: number
+          response?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          date: string
+          description: string
+          id: string
+          profile_id: string
+          responsible: string
+          status: string
+          title: string
+        }
+        Insert: {
+          date?: string
+          description?: string
+          id?: string
+          profile_id: string
+          responsible?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          date?: string
+          description?: string
+          id?: string
+          profile_id?: string
+          responsible?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
