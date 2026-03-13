@@ -290,7 +290,7 @@ export async function getTasks(profileId?: string): Promise<Task[]> {
 
 export async function upsertTask(task: Partial<Task> & { id?: string }): Promise<Task | null> {
   const normalized = normalizeDateFields(task as Record<string, unknown>, ["date"]);
-  return saveById<Task>("tasks", normalized as Task);
+  return saveById<Task>("tasks", normalized);
 }
 
 export async function deleteTask(id: string) {
