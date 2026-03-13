@@ -5,9 +5,11 @@ import {
   getReports, upsertReport, deleteReport as deleteReportApi,
   getUpdates, upsertUpdate, deleteUpdate as deleteUpdateApi,
   getTasks, upsertTask, deleteTask as deleteTaskApi,
-  getHistory, addHistory, deleteHistory
+  getHistory, addHistory, deleteHistory,
+  getCompanyInfo, upsertCompanyInfo,
+  getCompanyMaterials, addCompanyMaterial, deleteCompanyMaterial
 } from "@/lib/data";
-import type { Profile, Post, Report, ProfileUpdate, Task, HistoryEntry } from "@/lib/data";
+import type { Profile, Post, Report, ProfileUpdate, Task, HistoryEntry, CompanyInfo, CompanyMaterial } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Check, X, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Check, X, Pencil, Trash2, Link, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 const ProfileDetail = () => {
@@ -30,6 +32,10 @@ const ProfileDetail = () => {
   const [updates, setUpdates] = useState<ProfileUpdate[]>([]);
   const [tasks, setTasksState] = useState<Task[]>([]);
   const [history, setHistoryState] = useState<HistoryEntry[]>([]);
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+  const [companyDesc, setCompanyDesc] = useState('');
+  const [companyMaterials, setCompanyMaterials] = useState<CompanyMaterial[]>([]);
+  const [materialForm, setMaterialForm] = useState({ label: '', url: '' });
   const [loading, setLoading] = useState(true);
 
   const [showPost, setShowPost] = useState(false);
@@ -50,8 +56,9 @@ const ProfileDetail = () => {
 
   const load = useCallback(async () => {
     if (!id) return;
-    const [allProfiles, po, re, up, ta, hi] = await Promise.all([
-      getProfiles(), getPosts(id), getReports(id), getUpdates(id), getTasks(id), getHistory(id)
+    const [allProfiles, po, re, up, ta, hi, ci, cm] = await Promise.all([
+      getProfiles(), getPosts(id), getReports(id), getUpdates(id), getTasks(id), getHistory(id),
+      getCompanyInfo(id), getCompanyMaterials(id)
     ]);
     setProfile(allProfiles.find(p => p.id === id) || null);
     setPosts(po);
@@ -59,6 +66,9 @@ const ProfileDetail = () => {
     setUpdates(up);
     setTasksState(ta);
     setHistoryState(hi);
+    setCompanyInfo(ci);
+    setCompanyDesc(ci?.description || '');
+    setCompanyMaterials(cm);
     setLoading(false);
   }, [id]);
 
@@ -249,8 +259,9 @@ const ProfileDetail = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="posts">
+      <Tabs defaultValue="company">
         <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="company">Informações da Empresa</TabsTrigger>
           <TabsTrigger value="posts">Postagens</TabsTrigger>
           <TabsTrigger value="approval">Aprovação</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
@@ -258,6 +269,80 @@ const ProfileDetail = () => {
           <TabsTrigger value="tasks">Tarefas</TabsTrigger>
           <TabsTrigger value="history">Histórico</TabsTrigger>
         </TabsList>
+
+        {/* COMPANY INFO */}
+        <TabsContent value="company" className="space-y-6">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold text-lg">Sobre a Empresa</h3>
+              <Textarea
+                placeholder="Descreva informações sobre a empresa, serviços, diferenciais..."
+                value={companyDesc}
+                onChange={e => setCompanyDesc(e.target.value)}
+                className="min-h-[120px]"
+              />
+              <Button onClick={async () => {
+                try {
+                  await upsertCompanyInfo({ id: companyInfo?.id, profile_id: id!, description: companyDesc });
+                  toast.success('Informações salvas!');
+                  await load();
+                } catch (error) {
+                  toast.error(getErrorMessage(error));
+                }
+              }}>Salvar Descrição</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold text-lg">Materiais da Empresa</h3>
+              <p className="text-sm text-muted-foreground">Links para logo, artes, exemplos, documentos e outros materiais.</p>
+              
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input placeholder="Nome (ex: Logo)" value={materialForm.label} onChange={e => setMaterialForm(f => ({ ...f, label: e.target.value }))} className="sm:w-1/3" />
+                <Input placeholder="URL do material" value={materialForm.url} onChange={e => setMaterialForm(f => ({ ...f, url: e.target.value }))} className="flex-1" />
+                <Button onClick={async () => {
+                  if (!materialForm.label.trim() || !materialForm.url.trim()) {
+                    toast.error('Preencha o nome e a URL.');
+                    return;
+                  }
+                  try {
+                    await addCompanyMaterial({ profile_id: id!, label: materialForm.label, url: materialForm.url });
+                    toast.success('Material adicionado!');
+                    setMaterialForm({ label: '', url: '' });
+                    await load();
+                  } catch (error) {
+                    toast.error(getErrorMessage(error));
+                  }
+                }} className="gap-2"><Plus className="h-4 w-4" /> Adicionar</Button>
+              </div>
+
+              <div className="space-y-2">
+                {companyMaterials.map(m => (
+                  <div key={m.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Link className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm font-medium">{m.label}</span>
+                      <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline truncate flex items-center gap-1">
+                        {m.url} <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                      </a>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive flex-shrink-0" onClick={async () => {
+                      try {
+                        await deleteCompanyMaterial(m.id);
+                        toast.success('Material removido!');
+                        await load();
+                      } catch (error) {
+                        toast.error('Erro ao remover material.');
+                      }
+                    }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                ))}
+                {companyMaterials.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum material adicionado</p>}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* POSTS */}
         <TabsContent value="posts" className="space-y-4">
