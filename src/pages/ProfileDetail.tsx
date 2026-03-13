@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Check, X } from "lucide-react";
+import { ArrowLeft, Plus, Check, X, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const ProfileDetail = () => {
@@ -21,21 +21,23 @@ const ProfileDetail = () => {
   const [, setRefresh] = useState(0);
   const refresh = () => setRefresh(n => n + 1);
 
-
-
-
   const [showPost, setShowPost] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [postForm, setPostForm] = useState({ imageUrl: '', text: '' });
+
   const [showReport, setShowReport] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [reportForm, setReportForm] = useState({ link: '', comment: '', date: '' });
+
   const [showUpdate, setShowUpdate] = useState(false);
+  const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null);
   const [updateForm, setUpdateForm] = useState({ description: '', responsible: '' });
+
   const [showTask, setShowTask] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskForm, setTaskForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as Task['status'] });
 
   if (!profile) return <div className="p-8 text-center text-muted-foreground">Perfil não encontrado</div>;
-
-
 
   const posts = getPosts().filter(p => p.profileId === id);
   const reports = getReports().filter(r => r.profileId === id);
@@ -43,19 +45,20 @@ const ProfileDetail = () => {
   const tasks = getTasks().filter(t => t.profileId === id);
   const history = getHistory().filter(h => h.profileId === id);
 
-
-
-
-  const handleAddPost = () => {
+  // === POSTS ===
+  const openEditPost = (p: Post) => { setPostForm({ imageUrl: p.imageUrl, text: p.text }); setEditingPostId(p.id); setShowPost(true); };
+  const handleSavePost = () => {
     const all = getPosts();
-    all.unshift({ id: crypto.randomUUID(), profileId: id!, imageUrl: postForm.imageUrl, text: postForm.text, status: 'pending', createdAt: new Date().toISOString().split('T')[0] });
-    setPosts(all);
-    addHistory(id!, 'Novo post criado para aprovação');
-    setShowPost(false);
-    setPostForm({ imageUrl: '', text: '' });
-    toast.success('Post criado!');
-    refresh();
+    if (editingPostId) {
+      const idx = all.findIndex(p => p.id === editingPostId);
+      if (idx !== -1) { all[idx] = { ...all[idx], ...postForm }; setPosts(all); addHistory(id!, 'Post editado'); toast.success('Post atualizado!'); }
+    } else {
+      all.unshift({ id: crypto.randomUUID(), profileId: id!, imageUrl: postForm.imageUrl, text: postForm.text, status: 'pending', createdAt: new Date().toISOString().split('T')[0] });
+      setPosts(all); addHistory(id!, 'Novo post criado para aprovação'); toast.success('Post criado!');
+    }
+    setShowPost(false); setEditingPostId(null); setPostForm({ imageUrl: '', text: '' }); refresh();
   };
+  const handleDeletePost = (postId: string) => { setPosts(getPosts().filter(p => p.id !== postId)); addHistory(id!, 'Post excluído'); toast.success('Post excluído!'); refresh(); };
 
   const handlePostAction = (postId: string, action: 'approved' | 'rejected') => {
     const all = getPosts();
@@ -63,44 +66,63 @@ const ProfileDetail = () => {
     if (idx !== -1) { all[idx].status = action; setPosts(all); addHistory(id!, `Post ${action === 'approved' ? 'aprovado' : 'rejeitado'}`); toast.success(action === 'approved' ? 'Post aprovado!' : 'Post rejeitado'); refresh(); }
   };
 
-  const handleAddReport = () => {
+  // === REPORTS ===
+  const openEditReport = (r: Report) => { setReportForm({ link: r.link || '', comment: r.comment, date: r.date }); setEditingReportId(r.id); setShowReport(true); };
+  const handleSaveReport = () => {
     const all = getReports();
-    all.unshift({ id: crypto.randomUUID(), profileId: id!, link: reportForm.link, comment: reportForm.comment, date: reportForm.date || new Date().toISOString().split('T')[0] });
-    setReports(all);
-    addHistory(id!, 'Relatório adicionado');
-    setShowReport(false);
-    setReportForm({ link: '', comment: '', date: '' });
-    toast.success('Relatório adicionado!');
-    refresh();
+    if (editingReportId) {
+      const idx = all.findIndex(r => r.id === editingReportId);
+      if (idx !== -1) { all[idx] = { ...all[idx], ...reportForm }; setReports(all); addHistory(id!, 'Relatório editado'); toast.success('Relatório atualizado!'); }
+    } else {
+      all.unshift({ id: crypto.randomUUID(), profileId: id!, link: reportForm.link, comment: reportForm.comment, date: reportForm.date || new Date().toISOString().split('T')[0] });
+      setReports(all); addHistory(id!, 'Relatório adicionado'); toast.success('Relatório adicionado!');
+    }
+    setShowReport(false); setEditingReportId(null); setReportForm({ link: '', comment: '', date: '' }); refresh();
   };
+  const handleDeleteReport = (reportId: string) => { setReports(getReports().filter(r => r.id !== reportId)); addHistory(id!, 'Relatório excluído'); toast.success('Relatório excluído!'); refresh(); };
 
-  const handleAddUpdate = () => {
+  // === UPDATES ===
+  const openEditUpdate = (u: ProfileUpdate) => { setUpdateForm({ description: u.description, responsible: u.responsible }); setEditingUpdateId(u.id); setShowUpdate(true); };
+  const handleSaveUpdate = () => {
     const all = getUpdates();
-    all.unshift({ id: crypto.randomUUID(), profileId: id!, description: updateForm.description, date: new Date().toISOString().split('T')[0], responsible: updateForm.responsible });
-    setUpdates(all);
-    addHistory(id!, `Atualização: ${updateForm.description}`);
-    setShowUpdate(false);
-    setUpdateForm({ description: '', responsible: '' });
-    toast.success('Atualização registrada!');
-    refresh();
+    if (editingUpdateId) {
+      const idx = all.findIndex(u => u.id === editingUpdateId);
+      if (idx !== -1) { all[idx] = { ...all[idx], ...updateForm }; setUpdates(all); addHistory(id!, 'Atualização editada'); toast.success('Atualização atualizada!'); }
+    } else {
+      all.unshift({ id: crypto.randomUUID(), profileId: id!, description: updateForm.description, date: new Date().toISOString().split('T')[0], responsible: updateForm.responsible });
+      setUpdates(all); addHistory(id!, `Atualização: ${updateForm.description}`); toast.success('Atualização registrada!');
+    }
+    setShowUpdate(false); setEditingUpdateId(null); setUpdateForm({ description: '', responsible: '' }); refresh();
   };
+  const handleDeleteUpdate = (updateId: string) => { setUpdates(getUpdates().filter(u => u.id !== updateId)); addHistory(id!, 'Atualização excluída'); toast.success('Atualização excluída!'); refresh(); };
 
-  const handleAddTask = () => {
+  // === TASKS ===
+  const openEditTask = (t: Task) => { setTaskForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status }); setEditingTaskId(t.id); setShowTask(true); };
+  const handleSaveTask = () => {
     const all = getTasks();
-    all.unshift({ id: crypto.randomUUID(), profileId: id!, ...taskForm });
-    setTasks(all);
-    addHistory(id!, `Tarefa criada: ${taskForm.title}`);
-    setShowTask(false);
-    setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' });
-    toast.success('Tarefa criada!');
-    refresh();
+    if (editingTaskId) {
+      const idx = all.findIndex(t => t.id === editingTaskId);
+      if (idx !== -1) { all[idx] = { ...all[idx], ...taskForm }; setTasks(all); addHistory(id!, `Tarefa editada: ${taskForm.title}`); toast.success('Tarefa atualizada!'); }
+    } else {
+      all.unshift({ id: crypto.randomUUID(), profileId: id!, ...taskForm });
+      setTasks(all); addHistory(id!, `Tarefa criada: ${taskForm.title}`); toast.success('Tarefa criada!');
+    }
+    setShowTask(false); setEditingTaskId(null); setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' }); refresh();
   };
+  const handleDeleteTask = (taskId: string) => { setTasks(getTasks().filter(t => t.id !== taskId)); addHistory(id!, 'Tarefa excluída'); toast.success('Tarefa excluída!'); refresh(); };
 
   const handleTaskStatus = (taskId: string, status: Task['status']) => {
     const all = getTasks();
     const idx = all.findIndex(t => t.id === taskId);
     if (idx !== -1) { all[idx].status = status; setTasks(all); addHistory(id!, `Tarefa "${all[idx].title}" → ${status}`); toast.success('Status atualizado!'); refresh(); }
   };
+
+  const ActionButtons = ({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) => (
+    <div className="flex gap-1">
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}><Pencil className="h-3.5 w-3.5" /></Button>
+      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}><Trash2 className="h-3.5 w-3.5" /></Button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -124,16 +146,19 @@ const ProfileDetail = () => {
 
         {/* POSTS */}
         <TabsContent value="posts" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => setShowPost(true)} className="gap-2"><Plus className="h-4 w-4" /> Novo Post</Button></div>
+          <div className="flex justify-end"><Button onClick={() => { setEditingPostId(null); setPostForm({ imageUrl: '', text: '' }); setShowPost(true); }} className="gap-2"><Plus className="h-4 w-4" /> Novo Post</Button></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {posts.map(p => (
               <Card key={p.id}>
                 <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant={p.status === 'approved' ? 'default' : p.status === 'rejected' ? 'destructive' : 'secondary'}>
+                      {p.status === 'pending' ? 'Pendente' : p.status === 'approved' ? 'Aprovado' : 'Rejeitado'}
+                    </Badge>
+                    <ActionButtons onEdit={() => openEditPost(p)} onDelete={() => handleDeletePost(p.id)} />
+                  </div>
                   {p.imageUrl && <img src={p.imageUrl} alt="" className="w-full h-40 object-cover rounded-lg mb-3" />}
-                  <p className="text-sm mb-2">{p.text}</p>
-                  <Badge variant={p.status === 'approved' ? 'default' : p.status === 'rejected' ? 'destructive' : 'secondary'}>
-                    {p.status === 'pending' ? 'Pendente' : p.status === 'approved' ? 'Aprovado' : 'Rejeitado'}
-                  </Badge>
+                  <p className="text-sm">{p.text}</p>
                 </CardContent>
               </Card>
             ))}
@@ -164,13 +189,16 @@ const ProfileDetail = () => {
 
         {/* REPORTS */}
         <TabsContent value="reports" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => setShowReport(true)} className="gap-2"><Plus className="h-4 w-4" /> Novo Relatório</Button></div>
+          <div className="flex justify-end"><Button onClick={() => { setEditingReportId(null); setReportForm({ link: '', comment: '', date: '' }); setShowReport(true); }} className="gap-2"><Plus className="h-4 w-4" /> Novo Relatório</Button></div>
           {reports.map(r => (
             <Card key={r.id}>
-              <CardContent className="p-4">
-                <p className="text-sm font-medium mb-1">{r.comment}</p>
-                {r.link && <a href={r.link} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Ver relatório</a>}
-                <p className="text-xs text-muted-foreground mt-2">{r.date}</p>
+              <CardContent className="p-4 flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium mb-1">{r.comment}</p>
+                  {r.link && <a href={r.link} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">Ver relatório</a>}
+                  <p className="text-xs text-muted-foreground mt-2">{r.date}</p>
+                </div>
+                <ActionButtons onEdit={() => openEditReport(r)} onDelete={() => handleDeleteReport(r.id)} />
               </CardContent>
             </Card>
           ))}
@@ -179,7 +207,7 @@ const ProfileDetail = () => {
 
         {/* UPDATES */}
         <TabsContent value="updates" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => setShowUpdate(true)} className="gap-2"><Plus className="h-4 w-4" /> Nova Atualização</Button></div>
+          <div className="flex justify-end"><Button onClick={() => { setEditingUpdateId(null); setUpdateForm({ description: '', responsible: '' }); setShowUpdate(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Atualização</Button></div>
           {updates.map(u => (
             <Card key={u.id}>
               <CardContent className="p-4 flex items-center justify-between">
@@ -187,6 +215,7 @@ const ProfileDetail = () => {
                   <p className="text-sm font-medium">{u.description}</p>
                   <p className="text-xs text-muted-foreground">{u.responsible} • {u.date}</p>
                 </div>
+                <ActionButtons onEdit={() => openEditUpdate(u)} onDelete={() => handleDeleteUpdate(u.id)} />
               </CardContent>
             </Card>
           ))}
@@ -195,24 +224,27 @@ const ProfileDetail = () => {
 
         {/* TASKS */}
         <TabsContent value="tasks" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => setShowTask(true)} className="gap-2"><Plus className="h-4 w-4" /> Nova Tarefa</Button></div>
+          <div className="flex justify-end"><Button onClick={() => { setEditingTaskId(null); setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' }); setShowTask(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Tarefa</Button></div>
           {tasks.map(t => (
             <Card key={t.id}>
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium text-sm">{t.title}</p>
                     <p className="text-xs text-muted-foreground">{t.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">{t.responsible} • {t.date}</p>
                   </div>
-                  <Select value={t.status} onValueChange={(v) => handleTaskStatus(t.id, v as Task['status'])}>
-                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pendente</SelectItem>
-                      <SelectItem value="in_progress">Em andamento</SelectItem>
-                      <SelectItem value="completed">Concluído</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select value={t.status} onValueChange={(v) => handleTaskStatus(t.id, v as Task['status'])}>
+                      <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pendente</SelectItem>
+                        <SelectItem value="in_progress">Em andamento</SelectItem>
+                        <SelectItem value="completed">Concluído</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <ActionButtons onEdit={() => openEditTask(t)} onDelete={() => handleDeleteTask(t.id)} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -235,57 +267,54 @@ const ProfileDetail = () => {
         </TabsContent>
       </Tabs>
 
-
-
-
       {/* POST DIALOG */}
       <Dialog open={showPost} onOpenChange={setShowPost}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Novo Post</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingPostId ? 'Editar Post' : 'Novo Post'}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>URL da imagem</Label><Input value={postForm.imageUrl} onChange={e => setPostForm(f => ({ ...f, imageUrl: e.target.value }))} /></div>
             <div><Label>Texto</Label><Textarea value={postForm.text} onChange={e => setPostForm(f => ({ ...f, text: e.target.value }))} /></div>
           </div>
-          <DialogFooter><Button onClick={handleAddPost}>Criar</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleSavePost}>{editingPostId ? 'Salvar' : 'Criar'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* REPORT DIALOG */}
       <Dialog open={showReport} onOpenChange={setShowReport}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Novo Relatório</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingReportId ? 'Editar Relatório' : 'Novo Relatório'}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Link do relatório</Label><Input value={reportForm.link} onChange={e => setReportForm(f => ({ ...f, link: e.target.value }))} /></div>
             <div><Label>Comentário</Label><Textarea value={reportForm.comment} onChange={e => setReportForm(f => ({ ...f, comment: e.target.value }))} /></div>
             <div><Label>Data</Label><Input type="date" value={reportForm.date} onChange={e => setReportForm(f => ({ ...f, date: e.target.value }))} /></div>
           </div>
-          <DialogFooter><Button onClick={handleAddReport}>Adicionar</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleSaveReport}>{editingReportId ? 'Salvar' : 'Adicionar'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* UPDATE DIALOG */}
       <Dialog open={showUpdate} onOpenChange={setShowUpdate}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Nova Atualização</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingUpdateId ? 'Editar Atualização' : 'Nova Atualização'}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Descrição</Label><Textarea value={updateForm.description} onChange={e => setUpdateForm(f => ({ ...f, description: e.target.value }))} /></div>
             <div><Label>Responsável</Label><Input value={updateForm.responsible} onChange={e => setUpdateForm(f => ({ ...f, responsible: e.target.value }))} /></div>
           </div>
-          <DialogFooter><Button onClick={handleAddUpdate}>Registrar</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleSaveUpdate}>{editingUpdateId ? 'Salvar' : 'Registrar'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* TASK DIALOG */}
       <Dialog open={showTask} onOpenChange={setShowTask}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Nova Tarefa</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingTaskId ? 'Editar Tarefa' : 'Nova Tarefa'}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Título</Label><Input value={taskForm.title} onChange={e => setTaskForm(f => ({ ...f, title: e.target.value }))} /></div>
             <div><Label>Descrição</Label><Textarea value={taskForm.description} onChange={e => setTaskForm(f => ({ ...f, description: e.target.value }))} /></div>
             <div><Label>Responsável</Label><Input value={taskForm.responsible} onChange={e => setTaskForm(f => ({ ...f, responsible: e.target.value }))} /></div>
             <div><Label>Data</Label><Input type="date" value={taskForm.date} onChange={e => setTaskForm(f => ({ ...f, date: e.target.value }))} /></div>
           </div>
-          <DialogFooter><Button onClick={handleAddTask}>Criar</Button></DialogFooter>
+          <DialogFooter><Button onClick={handleSaveTask}>{editingTaskId ? 'Salvar' : 'Criar'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
