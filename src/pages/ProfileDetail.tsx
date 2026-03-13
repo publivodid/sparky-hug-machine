@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProfiles, getLatestMetrics, getPreviousMetrics, getMetrics, setMetrics, getPosts, setPosts, getReports, setReports, getUpdates, setUpdates, getTasks, setTasks, getHistory, addHistory } from "@/lib/data";
+import { getProfiles, getPosts, setPosts, getReports, setReports, getUpdates, setUpdates, getTasks, setTasks, getHistory, addHistory } from "@/lib/data";
 import type { Post, Report, ProfileUpdate, Task } from "@/lib/data";
-import { MetricCard } from "@/components/MetricCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +21,8 @@ const ProfileDetail = () => {
   const [, setRefresh] = useState(0);
   const refresh = () => setRefresh(n => n + 1);
 
-  const [showMetrics, setShowMetrics] = useState(false);
-  const now = new Date();
-  const [metricsForm, setMetricsForm] = useState({ month: String(now.getMonth() + 1), year: String(now.getFullYear()), averageRating: '', totalReviews: '', profileViews: '', phoneClicks: '', websiteClicks: '', routeRequests: '' });
+
+
 
   const [showPost, setShowPost] = useState(false);
   const [postForm, setPostForm] = useState({ imageUrl: '', text: '' });
@@ -37,34 +35,16 @@ const ProfileDetail = () => {
 
   if (!profile) return <div className="p-8 text-center text-muted-foreground">Perfil não encontrado</div>;
 
-  const latest = getLatestMetrics(id!);
-  const previous = getPreviousMetrics(id!);
+
+
   const posts = getPosts().filter(p => p.profileId === id);
   const reports = getReports().filter(r => r.profileId === id);
   const updates = getUpdates().filter(u => u.profileId === id);
   const tasks = getTasks().filter(t => t.profileId === id);
   const history = getHistory().filter(h => h.profileId === id);
 
-  const handleAddMetrics = () => {
-    if (!metricsForm.month || !metricsForm.year) {
-      toast.error('Preencha mês e ano');
-      return;
-    }
-    const all = getMetrics();
-    all.push({
-      id: crypto.randomUUID(), profileId: id!,
-      month: parseInt(metricsForm.month), year: parseInt(metricsForm.year),
-      averageRating: parseFloat(metricsForm.averageRating) || 0, totalReviews: parseInt(metricsForm.totalReviews) || 0,
-      profileViews: parseInt(metricsForm.profileViews) || 0, phoneClicks: parseInt(metricsForm.phoneClicks) || 0,
-      websiteClicks: parseInt(metricsForm.websiteClicks) || 0, routeRequests: parseInt(metricsForm.routeRequests) || 0,
-    });
-    setMetrics(all);
-    addHistory(id!, 'Métricas atualizadas');
-    setShowMetrics(false);
-    setMetricsForm({ month: String(now.getMonth() + 1), year: String(now.getFullYear()), averageRating: '', totalReviews: '', profileViews: '', phoneClicks: '', websiteClicks: '', routeRequests: '' });
-    toast.success('Métricas atualizadas!');
-    refresh();
-  };
+
+
 
   const handleAddPost = () => {
     const all = getPosts();
@@ -132,9 +112,8 @@ const ProfileDetail = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="dashboard">
+      <Tabs defaultValue="posts">
         <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="posts">Postagens</TabsTrigger>
           <TabsTrigger value="approval">Aprovação</TabsTrigger>
           <TabsTrigger value="reports">Relatórios</TabsTrigger>
@@ -142,26 +121,6 @@ const ProfileDetail = () => {
           <TabsTrigger value="tasks">Tarefas</TabsTrigger>
           <TabsTrigger value="history">Histórico</TabsTrigger>
         </TabsList>
-
-        {/* DASHBOARD */}
-        <TabsContent value="dashboard" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setShowMetrics(true)} className="gap-2"><Plus className="h-4 w-4" /> Atualizar métricas</Button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <MetricCard icon="⭐" label="Nota média" value={latest?.averageRating?.toFixed(1) || '—'} current={latest?.averageRating} previous={previous?.averageRating} />
-            <MetricCard icon="📈" label="Visualizações do perfil" value={latest?.profileViews || 0} current={latest?.profileViews} previous={previous?.profileViews} />
-            <MetricCard icon="📞" label="Cliques no telefone" value={latest?.phoneClicks || 0} current={latest?.phoneClicks} previous={previous?.phoneClicks} />
-            <MetricCard icon="🌐" label="Cliques no site" value={latest?.websiteClicks || 0} current={latest?.websiteClicks} previous={previous?.websiteClicks} />
-            <MetricCard icon="📍" label="Rotas solicitadas" value={latest?.routeRequests || 0} current={latest?.routeRequests} previous={previous?.routeRequests} />
-          </div>
-          {latest && (
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-              <span>📅 Métrica atualizada mês — {String(latest.month).padStart(2, '0')}/{String(latest.year).slice(-2)}</span>
-              <span>Próxima atualização daqui a 30 dias</span>
-            </div>
-          )}
-        </TabsContent>
 
         {/* POSTS */}
         <TabsContent value="posts" className="space-y-4">
@@ -276,23 +235,8 @@ const ProfileDetail = () => {
         </TabsContent>
       </Tabs>
 
-      {/* METRICS DIALOG */}
-      <Dialog open={showMetrics} onOpenChange={setShowMetrics}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Atualizar Métricas do Mês</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Mês</Label><Input type="number" min={1} max={12} value={metricsForm.month} onChange={e => setMetricsForm(f => ({ ...f, month: e.target.value }))} /></div>
-            <div><Label>Ano</Label><Input type="number" value={metricsForm.year} onChange={e => setMetricsForm(f => ({ ...f, year: e.target.value }))} /></div>
-            <div><Label>Nota média</Label><Input type="number" step="0.1" value={metricsForm.averageRating} onChange={e => setMetricsForm(f => ({ ...f, averageRating: e.target.value }))} /></div>
-            <div><Label>Total avaliações</Label><Input type="number" value={metricsForm.totalReviews} onChange={e => setMetricsForm(f => ({ ...f, totalReviews: e.target.value }))} /></div>
-            <div><Label>Visualizações</Label><Input type="number" value={metricsForm.profileViews} onChange={e => setMetricsForm(f => ({ ...f, profileViews: e.target.value }))} /></div>
-            <div><Label>Cliques telefone</Label><Input type="number" value={metricsForm.phoneClicks} onChange={e => setMetricsForm(f => ({ ...f, phoneClicks: e.target.value }))} /></div>
-            <div><Label>Cliques site</Label><Input type="number" value={metricsForm.websiteClicks} onChange={e => setMetricsForm(f => ({ ...f, websiteClicks: e.target.value }))} /></div>
-            <div><Label>Rotas solicitadas</Label><Input type="number" value={metricsForm.routeRequests} onChange={e => setMetricsForm(f => ({ ...f, routeRequests: e.target.value }))} /></div>
-          </div>
-          <DialogFooter><Button onClick={handleAddMetrics}>Salvar</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+
 
       {/* POST DIALOG */}
       <Dialog open={showPost} onOpenChange={setShowPost}>
