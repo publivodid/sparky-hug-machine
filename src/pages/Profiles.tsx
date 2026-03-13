@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProfiles, setProfiles, getLatestMetrics, addHistory } from "@/lib/data";
+import { getProfiles, setProfiles, addHistory } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
