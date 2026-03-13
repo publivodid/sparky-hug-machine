@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Check, X, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Check, X, Pencil, Trash2, Link, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 const ProfileDetail = () => {
