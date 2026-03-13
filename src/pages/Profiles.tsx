@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, MapPin, User, ExternalLink, MoreVertical, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Plus, Search, MapPin, User, ExternalLink, MoreVertical, Trash2, Archive, ArchiveRestore, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 const Profiles = () => {
