@@ -41,6 +41,26 @@ const Profiles = () => {
     toast.success('Perfil criado!');
   };
 
+  const openEdit = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const p = profiles.find(pr => pr.id === id);
+    if (p) {
+      setForm({ name: p.name, category: p.category, city: p.city, responsible: p.responsible });
+      setEditTarget(id);
+    }
+  };
+
+  const handleEdit = () => {
+    if (!editTarget || !form.name) return;
+    const updated = profiles.map(p => p.id === editTarget ? { ...p, ...form } : p);
+    setProfiles(updated);
+    setLocalProfiles(updated);
+    addHistory(editTarget, `Perfil editado`);
+    setEditTarget(null);
+    setForm({ name: '', category: '', city: '', responsible: '' });
+    toast.success('Perfil atualizado!');
+  };
+
   const handleArchive = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const updated = profiles.map(p => p.id === id ? { ...p, status: 'archived' as const } : p);
