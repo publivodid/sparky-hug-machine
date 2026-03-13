@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getProfiles, setProfiles, getLatestMetrics, addHistory } from "@/lib/data";
+import { getProfiles, setProfiles, addHistory } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, MapPin, Star, User, ExternalLink, MoreVertical, Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Plus, Search, MapPin, User, ExternalLink, MoreVertical, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { toast } from "sonner";
 
 const Profiles = () => {
@@ -93,7 +93,6 @@ const Profiles = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {displayed.map(p => {
-          const m = getLatestMetrics(p.id);
           const isArchived = p.status === 'archived';
           return (
             <Card key={p.id} className={`hover:shadow-md transition-shadow cursor-pointer group ${isArchived ? 'opacity-70' : ''}`} onClick={() => navigate(`/profile/${p.id}`)}>
@@ -130,7 +129,6 @@ const Profiles = () => {
                 </div>
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" /> {p.city}</div>
-                  <div className="flex items-center gap-2"><Star className="h-3.5 w-3.5" /> {m?.averageRating?.toFixed(1) || '—'} ({m?.totalReviews || 0} avaliações)</div>
                   <div className="flex items-center gap-2"><User className="h-3.5 w-3.5" /> {p.responsible}</div>
                 </div>
               </CardContent>
