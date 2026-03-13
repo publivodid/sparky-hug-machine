@@ -93,7 +93,6 @@ const Profiles = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {displayed.map(p => {
-          const m = getLatestMetrics(p.id);
           const isArchived = p.status === 'archived';
           return (
             <Card key={p.id} className={`hover:shadow-md transition-shadow cursor-pointer group ${isArchived ? 'opacity-70' : ''}`} onClick={() => navigate(`/profile/${p.id}`)}>
