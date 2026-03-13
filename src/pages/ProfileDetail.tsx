@@ -5,7 +5,7 @@ import {
   getReports, upsertReport, deleteReport as deleteReportApi,
   getUpdates, upsertUpdate, deleteUpdate as deleteUpdateApi,
   getTasks, upsertTask, deleteTask as deleteTaskApi,
-  getHistory, addHistory
+  getHistory, addHistory, deleteHistory
 } from "@/lib/data";
 import type { Profile, Post, Report, ProfileUpdate, Task, HistoryEntry } from "@/lib/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -372,10 +372,19 @@ const ProfileDetail = () => {
           {history.map(h => (
             <div key={h.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
-              <div>
+              <div className="flex-1">
                 <p className="text-sm">{h.action}</p>
                 <p className="text-xs text-muted-foreground">{new Date(h.date).toLocaleString('pt-BR')} • {h.user}</p>
               </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={async () => {
+                try {
+                  await deleteHistory(h.id);
+                  toast.success('Registro excluído!');
+                  await load();
+                } catch (error) {
+                  toast.error('Erro ao excluir registro.');
+                }
+              }}><Trash2 className="h-3.5 w-3.5" /></Button>
             </div>
           ))}
           {history.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhum registro no histórico</p>}
