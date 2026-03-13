@@ -56,8 +56,9 @@ const ProfileDetail = () => {
 
   const load = useCallback(async () => {
     if (!id) return;
-    const [allProfiles, po, re, up, ta, hi] = await Promise.all([
-      getProfiles(), getPosts(id), getReports(id), getUpdates(id), getTasks(id), getHistory(id)
+    const [allProfiles, po, re, up, ta, hi, ci, cm] = await Promise.all([
+      getProfiles(), getPosts(id), getReports(id), getUpdates(id), getTasks(id), getHistory(id),
+      getCompanyInfo(id), getCompanyMaterials(id)
     ]);
     setProfile(allProfiles.find(p => p.id === id) || null);
     setPosts(po);
@@ -65,6 +66,9 @@ const ProfileDetail = () => {
     setUpdates(up);
     setTasksState(ta);
     setHistoryState(hi);
+    setCompanyInfo(ci);
+    setCompanyDesc(ci?.description || '');
+    setCompanyMaterials(cm);
     setLoading(false);
   }, [id]);
 
