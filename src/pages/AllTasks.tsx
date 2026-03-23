@@ -18,7 +18,7 @@ const AllTasks = () => {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [form, setForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string });
+  const [form, setForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string, priority: 'medium' as string });
 
   const [filterProfile, setFilterProfile] = useState<string>('all');
   const [filterDateFrom, setFilterDateFrom] = useState('');
