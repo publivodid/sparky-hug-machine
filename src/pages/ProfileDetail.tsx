@@ -527,6 +527,13 @@ const ProfileDetail = () => {
           <DialogFooter><Button onClick={handleSaveTask}>{editingTaskId ? 'Salvar' : 'Criar'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* IMAGE PREVIEW MODAL */}
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-3xl p-2">
+          {previewImage && <img src={previewImage} alt="Preview" className="w-full h-auto rounded-lg" />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
