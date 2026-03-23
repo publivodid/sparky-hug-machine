@@ -37,6 +37,7 @@ const ProfileDetail = () => {
   const [companyMaterials, setCompanyMaterials] = useState<CompanyMaterial[]>([]);
   const [materialForm, setMaterialForm] = useState({ label: '', url: '' });
   const [loading, setLoading] = useState(true);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [showPost, setShowPost] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -357,7 +358,7 @@ const ProfileDetail = () => {
                     </Badge>
                     <ActionButtons onEdit={() => openEditPost(p)} onDelete={() => handleDeletePost(p.id)} />
                   </div>
-                  {p.image_url && <img src={p.image_url} alt="" className="w-full h-40 object-cover rounded-lg mb-3" />}
+                  {p.image_url && <img src={p.image_url} alt="" className="w-full h-40 object-cover rounded-lg mb-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setPreviewImage(p.image_url)} />}
                   <p className="text-sm">{p.text}</p>
                 </CardContent>
               </Card>
@@ -371,7 +372,7 @@ const ProfileDetail = () => {
             <Card key={p.id}>
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row gap-4">
-                  {p.image_url && <img src={p.image_url} alt="" className="w-full md:w-48 h-32 object-cover rounded-lg" />}
+                  {p.image_url && <img src={p.image_url} alt="" className="w-full md:w-48 h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setPreviewImage(p.image_url)} />}
                   <div className="flex-1">
                     <p className="text-sm mb-3">{p.text}</p>
                     <Badge variant="secondary" className="mb-3">Pendente</Badge>
@@ -524,6 +525,13 @@ const ProfileDetail = () => {
             <div><Label>Data</Label><Input type="date" value={taskForm.date} onChange={e => setTaskForm(f => ({ ...f, date: e.target.value }))} /></div>
           </div>
           <DialogFooter><Button onClick={handleSaveTask}>{editingTaskId ? 'Salvar' : 'Criar'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* IMAGE PREVIEW MODAL */}
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-3xl p-2">
+          {previewImage && <img src={previewImage} alt="Preview" className="w-full h-auto rounded-lg" />}
         </DialogContent>
       </Dialog>
     </div>
