@@ -357,7 +357,7 @@ const ProfileDetail = () => {
                     </Badge>
                     <ActionButtons onEdit={() => openEditPost(p)} onDelete={() => handleDeletePost(p.id)} />
                   </div>
-                  {p.image_url && <img src={p.image_url} alt="" className="w-full h-40 object-cover rounded-lg mb-3" />}
+                  {p.image_url && <img src={p.image_url} alt="" className="w-full h-40 object-cover rounded-lg mb-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setPreviewImage(p.image_url)} />}
                   <p className="text-sm">{p.text}</p>
                 </CardContent>
               </Card>
