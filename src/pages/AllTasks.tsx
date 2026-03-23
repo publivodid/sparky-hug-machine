@@ -79,8 +79,6 @@ const AllTasks = () => {
     setEditingTask(t);
     setShowEdit(true);
   };
-    setShowEdit(true);
-  };
 
   const handleSave = async () => {
     if (!editingTask) return;
