@@ -106,6 +106,7 @@ const CalendarPage = () => {
                     <p className="text-xs text-muted-foreground truncate">{t.description}</p>
                     <div className="flex gap-2 mt-1">
                       <Badge variant="outline" className="text-xs">{profileName(t.profile_id)}</Badge>
+                      <span className={`text-xs ${priorityColor(t.priority)}`}>{priorityLabel(t.priority)}</span>
                       <span className="text-xs text-muted-foreground">{t.responsible}</span>
                     </div>
                   </div>
