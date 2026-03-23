@@ -45,13 +45,17 @@ const AllTasks = () => {
     });
   }, [tasks, filterProfile, filterPriority, filterDateFrom, filterDateTo]);
 
-  const hasActiveFilters = filterProfile !== 'all' || filterDateFrom || filterDateTo;
+  const hasActiveFilters = filterProfile !== 'all' || filterPriority !== 'all' || filterDateFrom || filterDateTo;
 
   const clearFilters = () => {
     setFilterProfile('all');
+    setFilterPriority('all');
     setFilterDateFrom('');
     setFilterDateTo('');
   };
+
+  const priorityLabel = (p: string) => p === 'high' ? 'Alta' : p === 'low' ? 'Baixa' : 'Média';
+  const priorityColor = (p: string) => p === 'high' ? 'text-destructive font-medium' : p === 'low' ? 'text-muted-foreground' : 'text-primary font-medium';
 
   const getErrorMessage = (error: unknown) => {
     if (error && typeof error === 'object' && 'message' in error) {
