@@ -53,7 +53,7 @@ const ProfileDetail = () => {
 
   const [showTask, setShowTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [taskForm, setTaskForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string });
+  const [taskForm, setTaskForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string, priority: 'medium' as string });
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -195,7 +195,7 @@ const ProfileDetail = () => {
   };
 
   // === TASKS ===
-  const openEditTask = (t: Task) => { setTaskForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status }); setEditingTaskId(t.id); setShowTask(true); };
+  const openEditTask = (t: Task) => { setTaskForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status, priority: t.priority || 'medium' }); setEditingTaskId(t.id); setShowTask(true); };
   const handleSaveTask = async () => {
     if (!taskForm.title.trim()) {
       toast.error('Informe o título da tarefa.');
@@ -215,7 +215,7 @@ const ProfileDetail = () => {
 
       setShowTask(false);
       setEditingTaskId(null);
-      setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' });
+      setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending', priority: 'medium' });
       await load();
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -425,7 +425,7 @@ const ProfileDetail = () => {
 
         {/* TASKS */}
         <TabsContent value="tasks" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => { setEditingTaskId(null); setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' }); setShowTask(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Tarefa</Button></div>
+          <div className="flex justify-end"><Button onClick={() => { setEditingTaskId(null); setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending', priority: 'medium' }); setShowTask(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Tarefa</Button></div>
           {tasks.map(t => (
             <Card key={t.id}>
               <CardContent className="p-4">
@@ -433,7 +433,7 @@ const ProfileDetail = () => {
                   <div className="flex-1">
                     <p className="font-medium text-sm">{t.title}</p>
                     <p className="text-xs text-muted-foreground">{t.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t.responsible} • {t.date}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t.responsible} • {t.date} • <span className={t.priority === 'high' ? 'text-destructive font-medium' : t.priority === 'low' ? 'text-muted-foreground' : 'text-primary font-medium'}>{t.priority === 'high' ? 'Alta' : t.priority === 'low' ? 'Baixa' : 'Média'}</span></p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Select value={t.status} onValueChange={(v) => handleTaskStatus(t, v)}>
@@ -523,6 +523,17 @@ const ProfileDetail = () => {
             <div><Label>Descrição</Label><Textarea value={taskForm.description} onChange={e => setTaskForm(f => ({ ...f, description: e.target.value }))} /></div>
             <div><Label>Responsável</Label><Input value={taskForm.responsible} onChange={e => setTaskForm(f => ({ ...f, responsible: e.target.value }))} /></div>
             <div><Label>Data</Label><Input type="date" value={taskForm.date} onChange={e => setTaskForm(f => ({ ...f, date: e.target.value }))} /></div>
+            <div>
+              <Label>Prioridade</Label>
+              <Select value={taskForm.priority} onValueChange={v => setTaskForm(f => ({ ...f, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Baixa</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter><Button onClick={handleSaveTask}>{editingTaskId ? 'Salvar' : 'Criar'}</Button></DialogFooter>
         </DialogContent>

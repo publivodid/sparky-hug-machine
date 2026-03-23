@@ -55,6 +55,9 @@ const CalendarPage = () => {
   const statusVariant = (s: string): "default" | "secondary" | "outline" =>
     s === 'completed' ? 'default' : s === 'in_progress' ? 'secondary' : 'outline';
 
+  const priorityLabel = (p: string) => p === 'high' ? 'Alta' : p === 'low' ? 'Baixa' : 'Média';
+  const priorityColor = (p: string) => p === 'high' ? 'text-destructive font-medium' : p === 'low' ? 'text-muted-foreground' : 'text-primary font-medium';
+
   if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
 
   return (
@@ -103,6 +106,7 @@ const CalendarPage = () => {
                     <p className="text-xs text-muted-foreground truncate">{t.description}</p>
                     <div className="flex gap-2 mt-1">
                       <Badge variant="outline" className="text-xs">{profileName(t.profile_id)}</Badge>
+                      <span className={`text-xs ${priorityColor(t.priority)}`}>{priorityLabel(t.priority)}</span>
                       <span className="text-xs text-muted-foreground">{t.responsible}</span>
                     </div>
                   </div>
@@ -142,6 +146,10 @@ const CalendarPage = () => {
                 <div>
                   <p className="text-xs text-muted-foreground font-medium mb-1">Data</p>
                   <p className="text-sm">{selectedTask.date}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Prioridade</p>
+                  <span className={`text-sm ${priorityColor(selectedTask.priority)}`}>{priorityLabel(selectedTask.priority)}</span>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-medium mb-1">Status</p>

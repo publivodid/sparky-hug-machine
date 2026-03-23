@@ -18,9 +18,10 @@ const AllTasks = () => {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [form, setForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string });
+  const [form, setForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string, priority: 'medium' as string });
 
   const [filterProfile, setFilterProfile] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
 
@@ -37,19 +38,24 @@ const AllTasks = () => {
   const filteredTasks = useMemo(() => {
     return tasks.filter(t => {
       if (filterProfile !== 'all' && t.profile_id !== filterProfile) return false;
+      if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
       if (filterDateFrom && t.date < filterDateFrom) return false;
       if (filterDateTo && t.date > filterDateTo) return false;
       return true;
     });
-  }, [tasks, filterProfile, filterDateFrom, filterDateTo]);
+  }, [tasks, filterProfile, filterPriority, filterDateFrom, filterDateTo]);
 
-  const hasActiveFilters = filterProfile !== 'all' || filterDateFrom || filterDateTo;
+  const hasActiveFilters = filterProfile !== 'all' || filterPriority !== 'all' || filterDateFrom || filterDateTo;
 
   const clearFilters = () => {
     setFilterProfile('all');
+    setFilterPriority('all');
     setFilterDateFrom('');
     setFilterDateTo('');
   };
+
+  const priorityLabel = (p: string) => p === 'high' ? 'Alta' : p === 'low' ? 'Baixa' : 'Média';
+  const priorityColor = (p: string) => p === 'high' ? 'text-destructive font-medium' : p === 'low' ? 'text-muted-foreground' : 'text-primary font-medium';
 
   const getErrorMessage = (error: unknown) => {
     if (error && typeof error === 'object' && 'message' in error) {
@@ -69,8 +75,10 @@ const AllTasks = () => {
   };
 
   const openEdit = (t: Task) => {
-    setForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status });
+    setForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status, priority: t.priority || 'medium' });
     setEditingTask(t);
+    setShowEdit(true);
+  };
     setShowEdit(true);
   };
 
@@ -127,7 +135,7 @@ const AllTasks = () => {
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Cliente</Label>
               <Select value={filterProfile} onValueChange={setFilterProfile}>
@@ -137,6 +145,18 @@ const AllTasks = () => {
                   {profiles.filter(p => p.status !== 'archived').map(p => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Prioridade</Label>
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="low">Baixa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -161,6 +181,7 @@ const AllTasks = () => {
                 <p className="text-xs text-muted-foreground">{t.description}</p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="outline" className="text-xs">{profileName(t.profile_id)}</Badge>
+                  <span className={`text-xs ${priorityColor(t.priority)}`}>{priorityLabel(t.priority)}</span>
                   <span className="text-xs text-muted-foreground">{t.responsible} • {t.date}</span>
                 </div>
               </div>
@@ -190,6 +211,17 @@ const AllTasks = () => {
             <div><Label>Descrição</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
             <div><Label>Responsável</Label><Input value={form.responsible} onChange={e => setForm(f => ({ ...f, responsible: e.target.value }))} /></div>
             <div><Label>Data</Label><Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} /></div>
+            <div>
+              <Label>Prioridade</Label>
+              <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Baixa</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter><Button onClick={handleSave}>Salvar</Button></DialogFooter>
         </DialogContent>
