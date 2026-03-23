@@ -75,8 +75,10 @@ const AllTasks = () => {
   };
 
   const openEdit = (t: Task) => {
-    setForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status });
+    setForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status, priority: t.priority || 'medium' });
     setEditingTask(t);
+    setShowEdit(true);
+  };
     setShowEdit(true);
   };
 
