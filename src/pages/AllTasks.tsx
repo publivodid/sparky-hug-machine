@@ -135,7 +135,7 @@ const AllTasks = () => {
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Cliente</Label>
               <Select value={filterProfile} onValueChange={setFilterProfile}>
@@ -145,6 +145,18 @@ const AllTasks = () => {
                   {profiles.filter(p => p.status !== 'archived').map(p => (
                     <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Prioridade</Label>
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="low">Baixa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
