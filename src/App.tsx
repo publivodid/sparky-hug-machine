@@ -28,6 +28,7 @@ const App = () => (
             <Route path="/profiles" element={<Profiles />} />
             <Route path="/profile/:id" element={<ProfileDetail />} />
             <Route path="/tasks" element={<AllTasks />} />
+            <Route path="/calendar" element={<CalendarPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
