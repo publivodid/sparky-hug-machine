@@ -21,6 +21,7 @@ const AllTasks = () => {
   const [form, setForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string, priority: 'medium' as string });
 
   const [filterProfile, setFilterProfile] = useState<string>('all');
+  const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
 
