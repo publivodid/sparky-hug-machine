@@ -1,4 +1,4 @@
-import { LayoutDashboard, Building2, ListChecks } from "lucide-react";
+import { LayoutDashboard, Building2, ListChecks, CalendarDays } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
