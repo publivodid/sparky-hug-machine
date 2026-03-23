@@ -1,4 +1,4 @@
-import { LayoutDashboard, Building2, ListChecks } from "lucide-react";
+import { LayoutDashboard, Building2, ListChecks, CalendarDays } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -17,6 +17,7 @@ const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Perfis", url: "/profiles", icon: Building2 },
   { title: "Tarefas", url: "/tasks", icon: ListChecks },
+  { title: "Calendário", url: "/calendar", icon: CalendarDays },
 ];
 
 export function AppSidebar() {
