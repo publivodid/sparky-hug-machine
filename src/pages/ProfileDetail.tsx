@@ -215,7 +215,7 @@ const ProfileDetail = () => {
 
       setShowTask(false);
       setEditingTaskId(null);
-      setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' });
+      setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending', priority: 'medium' });
       await load();
     } catch (error) {
       toast.error(getErrorMessage(error));
