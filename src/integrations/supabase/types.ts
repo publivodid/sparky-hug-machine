@@ -332,6 +332,7 @@ export type Database = {
           date: string
           description: string
           id: string
+          priority: string
           profile_id: string
           responsible: string
           status: string
@@ -341,6 +342,7 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          priority?: string
           profile_id: string
           responsible?: string
           status?: string
@@ -350,6 +352,7 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          priority?: string
           profile_id?: string
           responsible?: string
           status?: string
