@@ -425,7 +425,7 @@ const ProfileDetail = () => {
 
         {/* TASKS */}
         <TabsContent value="tasks" className="space-y-4">
-          <div className="flex justify-end"><Button onClick={() => { setEditingTaskId(null); setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending' }); setShowTask(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Tarefa</Button></div>
+          <div className="flex justify-end"><Button onClick={() => { setEditingTaskId(null); setTaskForm({ title: '', description: '', responsible: '', date: '', status: 'pending', priority: 'medium' }); setShowTask(true); }} className="gap-2"><Plus className="h-4 w-4" /> Nova Tarefa</Button></div>
           {tasks.map(t => (
             <Card key={t.id}>
               <CardContent className="p-4">
