@@ -195,7 +195,7 @@ const ProfileDetail = () => {
   };
 
   // === TASKS ===
-  const openEditTask = (t: Task) => { setTaskForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status }); setEditingTaskId(t.id); setShowTask(true); };
+  const openEditTask = (t: Task) => { setTaskForm({ title: t.title, description: t.description, responsible: t.responsible, date: t.date, status: t.status, priority: t.priority || 'medium' }); setEditingTaskId(t.id); setShowTask(true); };
   const handleSaveTask = async () => {
     if (!taskForm.title.trim()) {
       toast.error('Informe o título da tarefa.');
