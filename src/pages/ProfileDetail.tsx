@@ -433,7 +433,7 @@ const ProfileDetail = () => {
                   <div className="flex-1">
                     <p className="font-medium text-sm">{t.title}</p>
                     <p className="text-xs text-muted-foreground">{t.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t.responsible} • {t.date}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t.responsible} • {t.date} • <span className={t.priority === 'high' ? 'text-destructive font-medium' : t.priority === 'low' ? 'text-muted-foreground' : 'text-primary font-medium'}>{t.priority === 'high' ? 'Alta' : t.priority === 'low' ? 'Baixa' : 'Média'}</span></p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Select value={t.status} onValueChange={(v) => handleTaskStatus(t, v)}>
