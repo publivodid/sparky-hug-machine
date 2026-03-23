@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { getTasks, upsertTask, deleteTask as deleteTaskApi, getProfiles, addHistory } from "@/lib/data";
 import type { Task, Profile } from "@/lib/data";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Filter, X } from "lucide-react";
 import { toast } from "sonner";
 
 const AllTasks = () => {
@@ -20,6 +20,10 @@ const AllTasks = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [form, setForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string });
 
+  const [filterProfile, setFilterProfile] = useState<string>('all');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+
   const load = useCallback(async () => {
     const [p, t] = await Promise.all([getProfiles(), getTasks()]);
     setProfiles(p);
@@ -29,6 +33,23 @@ const AllTasks = () => {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(t => {
+      if (filterProfile !== 'all' && t.profile_id !== filterProfile) return false;
+      if (filterDateFrom && t.date < filterDateFrom) return false;
+      if (filterDateTo && t.date > filterDateTo) return false;
+      return true;
+    });
+  }, [tasks, filterProfile, filterDateFrom, filterDateTo]);
+
+  const hasActiveFilters = filterProfile !== 'all' || filterDateFrom || filterDateTo;
+
+  const clearFilters = () => {
+    setFilterProfile('all');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+  };
 
   const getErrorMessage = (error: unknown) => {
     if (error && typeof error === 'object' && 'message' in error) {
@@ -91,11 +112,48 @@ const AllTasks = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold" style={{ fontFamily: 'Space Grotesk' }}>Todas as Tarefas</h1>
-        <p className="text-muted-foreground text-sm">{tasks.length} tarefas registradas</p>
+        <p className="text-muted-foreground text-sm">{filteredTasks.length} tarefas encontradas</p>
       </div>
 
+      {/* FILTERS */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Filtros</span>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 ml-auto" onClick={clearFilters}>
+                <X className="h-3 w-3" /> Limpar
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground">Cliente</Label>
+              <Select value={filterProfile} onValueChange={setFilterProfile}>
+                <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os clientes</SelectItem>
+                  {profiles.filter(p => p.status !== 'archived').map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Data inicial</Label>
+              <Input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Data final</Label>
+              <Input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="space-y-3">
-        {tasks.map(t => (
+        {filteredTasks.map(t => (
           <Card key={t.id}>
             <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex-1">
@@ -121,7 +179,7 @@ const AllTasks = () => {
             </CardContent>
           </Card>
         ))}
-        {tasks.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhuma tarefa registrada</p>}
+        {filteredTasks.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhuma tarefa encontrada</p>}
       </div>
 
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
