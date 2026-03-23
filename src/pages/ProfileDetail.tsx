@@ -37,6 +37,7 @@ const ProfileDetail = () => {
   const [companyMaterials, setCompanyMaterials] = useState<CompanyMaterial[]>([]);
   const [materialForm, setMaterialForm] = useState({ label: '', url: '' });
   const [loading, setLoading] = useState(true);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [showPost, setShowPost] = useState(false);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
