@@ -92,7 +92,7 @@ const Dashboard = () => {
                 <p className="text-lg font-bold text-primary">{stats.inProgress}</p>
                 <p className="text-[10px] text-muted-foreground">Em andamento</p>
               </div>
-              <div className="rounded-lg bg-emerald-500/10 p-2">
+              <div className="rounded-lg p-2" style={{ backgroundColor: 'hsl(var(--success) / 0.1)' }}>
                 <p className="text-lg font-bold" style={{ color: 'hsl(var(--success))' }}>{stats.completed}</p>
                 <p className="text-[10px] text-muted-foreground">Concluídas</p>
               </div>
