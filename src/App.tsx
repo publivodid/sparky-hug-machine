@@ -9,6 +9,7 @@ import Dashboard from "@/pages/Dashboard";
 import Profiles from "@/pages/Profiles";
 import ProfileDetail from "@/pages/ProfileDetail";
 import AllTasks from "@/pages/AllTasks";
+import CalendarPage from "@/pages/CalendarPage";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 
