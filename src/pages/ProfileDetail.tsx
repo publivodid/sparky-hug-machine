@@ -371,7 +371,7 @@ const ProfileDetail = () => {
             <Card key={p.id}>
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row gap-4">
-                  {p.image_url && <img src={p.image_url} alt="" className="w-full md:w-48 h-32 object-cover rounded-lg" />}
+                  {p.image_url && <img src={p.image_url} alt="" className="w-full md:w-48 h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setPreviewImage(p.image_url)} />}
                   <div className="flex-1">
                     <p className="text-sm mb-3">{p.text}</p>
                     <Badge variant="secondary" className="mb-3">Pendente</Badge>
