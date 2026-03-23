@@ -148,6 +148,10 @@ const CalendarPage = () => {
                   <p className="text-sm">{selectedTask.date}</p>
                 </div>
                 <div>
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Prioridade</p>
+                  <span className={`text-sm ${priorityColor(selectedTask.priority)}`}>{priorityLabel(selectedTask.priority)}</span>
+                </div>
+                <div>
                   <p className="text-xs text-muted-foreground font-medium mb-1">Status</p>
                   <Badge variant={statusVariant(selectedTask.status)}>
                     {statusLabel(selectedTask.status)}
