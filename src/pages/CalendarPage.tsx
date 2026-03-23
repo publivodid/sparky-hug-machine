@@ -55,6 +55,9 @@ const CalendarPage = () => {
   const statusVariant = (s: string): "default" | "secondary" | "outline" =>
     s === 'completed' ? 'default' : s === 'in_progress' ? 'secondary' : 'outline';
 
+  const priorityLabel = (p: string) => p === 'high' ? 'Alta' : p === 'low' ? 'Baixa' : 'Média';
+  const priorityColor = (p: string) => p === 'high' ? 'text-destructive font-medium' : p === 'low' ? 'text-muted-foreground' : 'text-primary font-medium';
+
   if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
 
   return (
