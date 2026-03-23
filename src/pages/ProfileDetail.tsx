@@ -53,7 +53,7 @@ const ProfileDetail = () => {
 
   const [showTask, setShowTask] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-  const [taskForm, setTaskForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string });
+  const [taskForm, setTaskForm] = useState({ title: '', description: '', responsible: '', date: '', status: 'pending' as string, priority: 'medium' as string });
 
   const load = useCallback(async () => {
     if (!id) return;
