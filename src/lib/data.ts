@@ -68,6 +68,7 @@ export interface Task {
   responsible: string;
   date: string;
   status: string;
+  priority: string;
 }
 
 export interface HistoryEntry {
