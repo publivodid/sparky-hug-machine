@@ -38,11 +38,12 @@ const AllTasks = () => {
   const filteredTasks = useMemo(() => {
     return tasks.filter(t => {
       if (filterProfile !== 'all' && t.profile_id !== filterProfile) return false;
+      if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
       if (filterDateFrom && t.date < filterDateFrom) return false;
       if (filterDateTo && t.date > filterDateTo) return false;
       return true;
     });
-  }, [tasks, filterProfile, filterDateFrom, filterDateTo]);
+  }, [tasks, filterProfile, filterPriority, filterDateFrom, filterDateTo]);
 
   const hasActiveFilters = filterProfile !== 'all' || filterDateFrom || filterDateTo;
 
