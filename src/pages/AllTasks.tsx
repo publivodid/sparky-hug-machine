@@ -24,7 +24,7 @@ const AllTasks = () => {
     const [p, t] = await Promise.all([getProfiles(), getTasks()]);
     setProfiles(p);
     const activeIds = new Set(p.filter(pr => pr.status !== 'archived').map(pr => pr.id));
-    setTasks(t.filter(tk => activeIds.has(tk.profile_id)));
+    setTasks(t.filter(tk => activeIds.has(tk.profile_id) && tk.status !== 'completed'));
     setLoading(false);
   }, []);
 
