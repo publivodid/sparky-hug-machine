@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN priority text NOT NULL DEFAULT 'medium';

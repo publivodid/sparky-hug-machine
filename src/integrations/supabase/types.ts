@@ -231,6 +231,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          priority: string
           responsible: string
           status: string
         }
@@ -240,6 +241,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          priority?: string
           responsible?: string
           status?: string
         }
@@ -249,6 +251,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          priority?: string
           responsible?: string
           status?: string
         }
