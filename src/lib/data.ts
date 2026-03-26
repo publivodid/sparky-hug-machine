@@ -8,6 +8,7 @@ export interface Profile {
   responsible: string;
   created_at: string;
   status: string;
+  priority: string;
 }
 
 export interface MonthlyMetrics {
