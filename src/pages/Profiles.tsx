@@ -247,7 +247,7 @@ const Profiles = () => {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<string | null>(null);
   const [archivedOpen, setArchivedOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active", post_frequency_days: "7" });
+  const [form, setForm] = useState({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active", automation_active: "no" });
 
   const load = useCallback(async () => {
     const p = await getProfiles();
@@ -280,7 +280,7 @@ const Profiles = () => {
   // Contador de perfis para postar hoje (atrasados + sem postagem)
   const perfisParaPostar = atrasados.length + semPostagem.length;
 
-  const resetForm = () => setForm({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active", post_frequency_days: "7" });
+  const resetForm = () => setForm({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active", automation_active: "no" });
 
   const handleAdd = async () => {
     if (!form.name) return;
@@ -289,7 +289,7 @@ const Profiles = () => {
       priority: form.priority, status: form.status,
     });
     if (result) {
-      await (supabase as any).from("profiles").update({ post_frequency_days: parseInt(form.post_frequency_days) || 7 }).eq("id", result.id);
+      await (supabase as any).from("profiles").update({ automation_active: form.automation_active === "yes" }).eq("id", result.id);
       await addHistory(result.id, `Perfil "${form.name}" criado`);
     }
     resetForm();
@@ -302,7 +302,7 @@ const Profiles = () => {
     setForm({
       name: p.name, category: p.category, city: p.city, responsible: p.responsible,
       priority: p.priority || "medium", status: p.status,
-      post_frequency_days: String(p.post_frequency_days || 7),
+      automation_active: p.automation_active ? "yes" : "no",
     });
     setEditTarget(p.id);
   };
@@ -313,7 +313,7 @@ const Profiles = () => {
       id: editTarget, name: form.name, category: form.category, city: form.city,
       responsible: form.responsible, priority: form.priority, status: form.status,
     });
-    await (supabase as any).from("profiles").update({ post_frequency_days: parseInt(form.post_frequency_days) || 7 }).eq("id", editTarget);
+    await (supabase as any).from("profiles").update({ automation_active: form.automation_active === "yes" }).eq("id", editTarget);
     await addHistory(editTarget, "Perfil editado");
     setEditTarget(null);
     resetForm();
@@ -406,8 +406,14 @@ const Profiles = () => {
         </Select>
       </div>
       <div>
-        <Label>Frequência de postagem (dias)</Label>
-        <Input type="number" min="1" value={form.post_frequency_days} onChange={e => setForm(f => ({ ...f, post_frequency_days: e.target.value }))} />
+        <Label>Automação Ativa</Label>
+        <Select value={form.automation_active} onValueChange={v => setForm(f => ({ ...f, automation_active: v }))}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="yes">Sim</SelectItem>
+            <SelectItem value="no">Não</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <Label>Status</Label>

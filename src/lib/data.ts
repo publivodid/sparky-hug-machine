@@ -13,6 +13,7 @@ export interface Profile {
   post_frequency_days: number;
   previous_post_date: string | null;
   last_post_action_at: string | null;
+  automation_active: boolean;
 }
 
 export interface MonthlyMetrics {
