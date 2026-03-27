@@ -190,9 +190,10 @@ interface PostStatusSectionProps {
   onRestore: (id: string) => void;
   onDelete: (id: string) => void;
   onMarkPost: (id: string) => void;
+  onUndoPost: (id: string) => void;
 }
 
-const PostStatusSection = ({ statusKey, profiles, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost }: PostStatusSectionProps) => {
+const PostStatusSection = ({ statusKey, profiles, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost, onUndoPost }: PostStatusSectionProps) => {
   const config = POST_STATUS_CONFIG_BASE[statusKey];
   const Icon = config.icon;
 
@@ -216,6 +217,7 @@ const PostStatusSection = ({ statusKey, profiles, onOpen, onEdit, onArchive, onR
             onRestore={() => onRestore(p.id)}
             onDelete={() => onDelete(p.id)}
             onMarkPost={() => onMarkPost(p.id)}
+            onUndoPost={() => onUndoPost(p.id)}
           />
         ))}
       </div>
@@ -472,9 +474,9 @@ const Profiles = () => {
 
       {/* Post Status sections — order: Em dia → Atrasados → Sem postagem */}
       <div className="space-y-5">
-        <PostStatusSection statusKey="em_dia" profiles={emDia} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
-        <PostStatusSection statusKey="atrasado" profiles={atrasados} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
-        <PostStatusSection statusKey="sem_postagem" profiles={semPostagem} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
+        <PostStatusSection statusKey="em_dia" profiles={emDia} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} />
+        <PostStatusSection statusKey="atrasado" profiles={atrasados} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} />
+        <PostStatusSection statusKey="sem_postagem" profiles={semPostagem} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} />
 
         {/* Archived */}
         {archivedFiltered.length > 0 && (
@@ -497,6 +499,7 @@ const Profiles = () => {
                     onRestore={() => handleRestore(p.id)}
                     onDelete={() => setDeleteTarget(p.id)}
                     onMarkPost={() => handleMarkPost(p.id)}
+                    onUndoPost={() => handleUndoPost(p.id)}
                   />
                 ))}
               </div>
