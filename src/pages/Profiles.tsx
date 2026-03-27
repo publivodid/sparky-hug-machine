@@ -141,9 +141,14 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
         </div>
 
         {/* Post status badge */}
-        <Badge className={`${postConfig.badgeClass} text-[11px] font-medium px-2.5 py-1 rounded-full w-fit`}>
-          {postLabel}
-        </Badge>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge className={`${postConfig.badgeClass} text-[11px] font-medium px-2.5 py-1 rounded-full w-fit`}>
+            {postLabel}
+          </Badge>
+          <Badge className={`${profile.automation_active ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" : "bg-muted text-muted-foreground"} text-[11px] font-medium px-2.5 py-1 rounded-full w-fit`}>
+            Automação: {profile.automation_active ? "Sim" : "Não"}
+          </Badge>
+        </div>
 
         <div className="flex items-center gap-2 pt-1 border-t border-border/50 flex-wrap">
           <Button size="sm" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onOpen}>
