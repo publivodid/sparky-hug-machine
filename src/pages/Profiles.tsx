@@ -20,8 +20,8 @@ import { toast } from "sonner";
 
 type PostStatus = "sem_postagem" | "atrasado" | "em_dia";
 
-const DIAS_PERMITIDOS = [1, 3, 4]; // seg, qua, qui
-const DIAS_NOMES = "seg, qua e qui";
+const DIAS_PERMITIDOS = [1, 3, 5]; // seg, qua, sex
+const DIAS_NOMES = "seg, qua e sex";
 
 const isDiaDePostagem = () => DIAS_PERMITIDOS.includes(new Date().getDay());
 
