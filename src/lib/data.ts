@@ -9,6 +9,8 @@ export interface Profile {
   created_at: string;
   status: string;
   priority: string;
+  last_post_date: string | null;
+  post_frequency_days: number;
 }
 
 export interface MonthlyMetrics {
