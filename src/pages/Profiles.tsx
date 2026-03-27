@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import {
   Plus, Search, MapPin, ChevronDown, ChevronRight,
   AlertTriangle, AlertCircle, CheckCircle2, Archive,
-  ExternalLink, Pencil, Trash2, ArchiveRestore, Send, CalendarClock, Undo2
+  ExternalLink, Pencil, Trash2, ArchiveRestore, Send, CalendarClock, Undo2, Wrench
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -97,6 +97,7 @@ interface ClientCardProps {
   onDelete: () => void;
   onMarkPost: () => void;
   onUndoPost: () => void;
+  onFixPost: () => void;
 }
 
 const canUndo = (profile: Profile): boolean => {
@@ -104,7 +105,11 @@ const canUndo = (profile: Profile): boolean => {
   return !!profile.last_post_action_at;
 };
 
-const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost, onUndoPost }: ClientCardProps) => {
+const needsFix = (profile: Profile): boolean => {
+  return !!profile.last_post_date && !profile.previous_post_date && !profile.last_post_action_at;
+};
+
+const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost, onUndoPost, onFixPost }: ClientCardProps) => {
   const isArchived = profile.status === "archived";
   const badge = getStatusBadge(profile.status);
   const postLabel = getPostBadgeLabel(profile);
@@ -158,6 +163,11 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
               <Undo2 className="h-3.5 w-3.5" /> Desfazer
             </Button>
           )}
+          {needsFix(profile) && (
+            <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs rounded-lg border-muted-foreground/30 text-muted-foreground hover:bg-muted" onClick={onFixPost} title="Usar apenas se a postagem foi marcada antes da atualização do sistema">
+              <Wrench className="h-3.5 w-3.5" /> Corrigir
+            </Button>
+          )}
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onEdit} title="Editar">
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -189,9 +199,10 @@ interface PostStatusSectionProps {
   onDelete: (id: string) => void;
   onMarkPost: (id: string) => void;
   onUndoPost: (id: string) => void;
+  onFixPost: (id: string) => void;
 }
 
-const PostStatusSection = ({ statusKey, profiles, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost, onUndoPost }: PostStatusSectionProps) => {
+const PostStatusSection = ({ statusKey, profiles, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost, onUndoPost, onFixPost }: PostStatusSectionProps) => {
   const config = POST_STATUS_CONFIG_BASE[statusKey];
   const Icon = config.icon;
 
@@ -216,6 +227,7 @@ const PostStatusSection = ({ statusKey, profiles, onOpen, onEdit, onArchive, onR
             onDelete={() => onDelete(p.id)}
             onMarkPost={() => onMarkPost(p.id)}
             onUndoPost={() => onUndoPost(p.id)}
+            onFixPost={() => onFixPost(p.id)}
           />
         ))}
       </div>
@@ -334,6 +346,19 @@ const Profiles = () => {
     }).eq("id", id);
     await addHistory(id, `Postagem desfeita para "${profile.name}"`);
     toast.success("Postagem desfeita.");
+    load();
+  };
+
+  const handleFixPost = async (id: string) => {
+    const profile = profiles.find(p => p.id === id);
+    if (!profile) return;
+    await (supabase as any).from("profiles").update({
+      last_post_date: null,
+      previous_post_date: null,
+      last_post_action_at: null,
+    }).eq("id", id);
+    await addHistory(id, `Postagem corrigida para "${profile.name}"`);
+    toast.success("Postagem corrigida. Cliente retornou para 'Sem postagem'.");
     load();
   };
 
@@ -469,9 +494,9 @@ const Profiles = () => {
 
       {/* Post Status sections — order: Em dia → Atrasados → Sem postagem */}
       <div className="space-y-5">
-        <PostStatusSection statusKey="em_dia" profiles={emDia} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} />
-        <PostStatusSection statusKey="atrasado" profiles={atrasados} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} />
-        <PostStatusSection statusKey="sem_postagem" profiles={semPostagem} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} />
+        <PostStatusSection statusKey="em_dia" profiles={emDia} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} onFixPost={handleFixPost} />
+        <PostStatusSection statusKey="atrasado" profiles={atrasados} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} onFixPost={handleFixPost} />
+        <PostStatusSection statusKey="sem_postagem" profiles={semPostagem} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} onFixPost={handleFixPost} />
 
         {/* Archived */}
         {archivedFiltered.length > 0 && (
@@ -495,6 +520,7 @@ const Profiles = () => {
                     onDelete={() => setDeleteTarget(p.id)}
                     onMarkPost={() => handleMarkPost(p.id)}
                     onUndoPost={() => handleUndoPost(p.id)}
+                    onFixPost={() => handleFixPost(p.id)}
                   />
                 ))}
               </div>
