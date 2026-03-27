@@ -230,9 +230,11 @@ export type Database = {
           city: string
           created_at: string
           id: string
+          last_post_action_at: string | null
           last_post_date: string | null
           name: string
           post_frequency_days: number
+          previous_post_date: string | null
           priority: string
           responsible: string
           status: string
@@ -242,9 +244,11 @@ export type Database = {
           city?: string
           created_at?: string
           id?: string
+          last_post_action_at?: string | null
           last_post_date?: string | null
           name: string
           post_frequency_days?: number
+          previous_post_date?: string | null
           priority?: string
           responsible?: string
           status?: string
@@ -254,9 +258,11 @@ export type Database = {
           city?: string
           created_at?: string
           id?: string
+          last_post_action_at?: string | null
           last_post_date?: string | null
           name?: string
           post_frequency_days?: number
+          previous_post_date?: string | null
           priority?: string
           responsible?: string
           status?: string
