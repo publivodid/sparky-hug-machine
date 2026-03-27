@@ -100,10 +100,8 @@ interface ClientCardProps {
 }
 
 const canUndo = (profile: Profile): boolean => {
-  if (!profile.previous_post_date) return false;
-  if (!profile.last_post_action_at) return false;
-  const diff = (Date.now() - new Date(profile.last_post_action_at).getTime()) / 60000;
-  return diff < 5;
+  // Show undo whenever last_post_action_at is set (means a "mark post" happened recently)
+  return !!profile.last_post_action_at;
 };
 
 const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost, onUndoPost }: ClientCardProps) => {
@@ -327,13 +325,10 @@ const Profiles = () => {
 
   const handleUndoPost = async (id: string) => {
     const profile = profiles.find(p => p.id === id);
-    if (!profile?.previous_post_date) return;
-    if (!canUndo(profile)) {
-      toast.error("O tempo para desfazer expirou (5 min).");
-      return;
-    }
+    if (!profile || !canUndo(profile)) return;
+    // If previous_post_date is null, client had no post before → restore to null (sem postagem)
     await (supabase as any).from("profiles").update({
-      last_post_date: profile.previous_post_date,
+      last_post_date: profile.previous_post_date || null,
       previous_post_date: null,
       last_post_action_at: null,
     }).eq("id", id);
