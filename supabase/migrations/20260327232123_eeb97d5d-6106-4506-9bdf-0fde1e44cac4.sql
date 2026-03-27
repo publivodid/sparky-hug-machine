@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN automation_active boolean NOT NULL DEFAULT false;
