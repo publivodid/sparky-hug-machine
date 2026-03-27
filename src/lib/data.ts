@@ -11,6 +11,8 @@ export interface Profile {
   priority: string;
   last_post_date: string | null;
   post_frequency_days: number;
+  previous_post_date: string | null;
+  last_post_action_at: string | null;
 }
 
 export interface MonthlyMetrics {
