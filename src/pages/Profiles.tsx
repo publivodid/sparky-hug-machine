@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import {
   Plus, Search, MapPin, ChevronDown, ChevronRight,
   AlertTriangle, AlertCircle, CheckCircle2, Archive,
-  ExternalLink, Pencil, Trash2, ArchiveRestore, Send, CalendarClock
+  ExternalLink, Pencil, Trash2, ArchiveRestore, Send, CalendarClock, Undo2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -96,9 +96,17 @@ interface ClientCardProps {
   onRestore: () => void;
   onDelete: () => void;
   onMarkPost: () => void;
+  onUndoPost: () => void;
 }
 
-const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost }: ClientCardProps) => {
+const canUndo = (profile: Profile): boolean => {
+  if (!profile.previous_post_date) return false;
+  if (!profile.last_post_action_at) return false;
+  const diff = (Date.now() - new Date(profile.last_post_action_at).getTime()) / 60000;
+  return diff < 5;
+};
+
+const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost, onUndoPost }: ClientCardProps) => {
   const isArchived = profile.status === "archived";
   const badge = getStatusBadge(profile.status);
   const postLabel = getPostBadgeLabel(profile);
@@ -134,7 +142,7 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
           {postLabel}
         </Badge>
 
-        <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+        <div className="flex items-center gap-2 pt-1 border-t border-border/50 flex-wrap">
           <Button size="sm" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onOpen}>
             <ExternalLink className="h-3.5 w-3.5" /> Abrir
           </Button>
@@ -145,6 +153,11 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
           ) : (
             <Button size="sm" variant="outline" className="flex-1 gap-1.5 h-8 text-xs rounded-lg opacity-50 cursor-not-allowed" disabled title={`Postagens apenas ${DIAS_NOMES}`}>
               <CalendarClock className="h-3.5 w-3.5" /> {DIAS_NOMES}
+            </Button>
+          )}
+          {canUndo(profile) && (
+            <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs rounded-lg border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30" onClick={onUndoPost} title="Desfazer postagem">
+              <Undo2 className="h-3.5 w-3.5" /> Desfazer
             </Button>
           )}
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onEdit} title="Editar">
@@ -297,10 +310,33 @@ const Profiles = () => {
   };
 
   const handleMarkPost = async (id: string) => {
-    await (supabase as any).from("profiles").update({ last_post_date: new Date().toISOString() }).eq("id", id);
-    const name = profiles.find(p => p.id === id)?.name;
+    const profile = profiles.find(p => p.id === id);
+    const now = new Date().toISOString();
+    await (supabase as any).from("profiles").update({
+      previous_post_date: profile?.last_post_date || null,
+      last_post_date: now,
+      last_post_action_at: now,
+    }).eq("id", id);
+    const name = profile?.name;
     await addHistory(id, `Postagem marcada para "${name}"`);
-    toast.success("Postagem marcada!");
+    toast.success("Postagem marcada ✔️ (clique em desfazer se foi engano)");
+    load();
+  };
+
+  const handleUndoPost = async (id: string) => {
+    const profile = profiles.find(p => p.id === id);
+    if (!profile?.previous_post_date) return;
+    if (!canUndo(profile)) {
+      toast.error("O tempo para desfazer expirou (5 min).");
+      return;
+    }
+    await (supabase as any).from("profiles").update({
+      last_post_date: profile.previous_post_date,
+      previous_post_date: null,
+      last_post_action_at: null,
+    }).eq("id", id);
+    await addHistory(id, `Postagem desfeita para "${profile.name}"`);
+    toast.success("Postagem desfeita.");
     load();
   };
 
