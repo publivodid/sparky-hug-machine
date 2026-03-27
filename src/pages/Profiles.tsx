@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProfiles, upsertProfile, deleteProfile as deleteProfileApi, addHistory } from "@/lib/data";
 import type { Profile } from "@/lib/data";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,36 +14,61 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import {
   Plus, Search, MapPin, ChevronDown, ChevronRight,
   AlertTriangle, AlertCircle, CheckCircle2, Archive,
-  ExternalLink, Pencil, Trash2, ArchiveRestore
+  ExternalLink, Pencil, Trash2, ArchiveRestore, Send
 } from "lucide-react";
 import { toast } from "sonner";
 
-const PRIORITY_CONFIG = {
-  high: {
-    label: "Alta Prioridade",
+type PostStatus = "sem_postagem" | "atrasado" | "em_dia";
+
+const getPostStatus = (profile: Profile): PostStatus => {
+  if (!profile.last_post_date) return "sem_postagem";
+  const dias = Math.floor((Date.now() - new Date(profile.last_post_date).getTime()) / (1000 * 60 * 60 * 24));
+  return dias > (profile.post_frequency_days || 7) ? "atrasado" : "em_dia";
+};
+
+const getPostBadgeLabel = (profile: Profile): string => {
+  const status = getPostStatus(profile);
+  if (status === "sem_postagem") return "Sem postagem";
+  if (status === "em_dia") {
+    const dias = Math.floor((Date.now() - new Date(profile.last_post_date!).getTime()) / (1000 * 60 * 60 * 24));
+    return dias === 0 ? "Postado hoje" : "Em dia";
+  }
+  const dias = Math.floor((Date.now() - new Date(profile.last_post_date!).getTime()) / (1000 * 60 * 60 * 24));
+  return `Atrasado há ${dias} dias`;
+};
+
+const POST_STATUS_CONFIG = {
+  sem_postagem: {
+    label: "Sem Postagem",
     icon: AlertTriangle,
     bg: "bg-red-50 dark:bg-red-950/30",
     border: "border-red-200 dark:border-red-900",
     iconColor: "text-red-500",
-    badge: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+    badgeClass: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
   },
-  medium: {
-    label: "Média Prioridade",
+  atrasado: {
+    label: "Atrasados",
     icon: AlertCircle,
     bg: "bg-amber-50 dark:bg-amber-950/30",
     border: "border-amber-200 dark:border-amber-900",
     iconColor: "text-amber-500",
-    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+    badgeClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
   },
-  low: {
-    label: "Baixa Prioridade",
+  em_dia: {
+    label: "Em Dia",
     icon: CheckCircle2,
     bg: "bg-emerald-50 dark:bg-emerald-950/30",
     border: "border-emerald-200 dark:border-emerald-900",
     iconColor: "text-emerald-500",
-    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+    badgeClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
   },
 } as const;
+
+const PRIORITY_BADGES: Record<string, { label: string; className: string }> = {
+  high: { label: "Alta", className: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300" },
+  medium: { label: "Média", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300" },
+  low: { label: "Baixa", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" },
+};
 
 const STATUS_BADGES: Record<string, { label: string; className: string }> = {
   active: { label: "Ativo", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" },
@@ -60,11 +86,16 @@ interface ClientCardProps {
   onArchive: () => void;
   onRestore: () => void;
   onDelete: () => void;
+  onMarkPost: () => void;
 }
 
-const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete }: ClientCardProps) => {
+const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost }: ClientCardProps) => {
   const isArchived = profile.status === "archived";
   const badge = getStatusBadge(profile.status);
+  const postLabel = getPostBadgeLabel(profile);
+  const postStatus = getPostStatus(profile);
+  const postConfig = POST_STATUS_CONFIG[postStatus];
+  const priorityBadge = PRIORITY_BADGES[profile.priority] || PRIORITY_BADGES.medium;
 
   return (
     <Card className="bg-card border rounded-2xl shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 group">
@@ -74,9 +105,14 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete }:
             <h3 className="font-semibold text-foreground text-base truncate">{profile.name}</h3>
             <p className="text-xs text-muted-foreground mt-0.5">{profile.category}</p>
           </div>
-          <Badge className={`${badge.className} text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ml-2`}>
-            {badge.label}
-          </Badge>
+          <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
+            <Badge className={`${badge.className} text-[10px] font-medium px-2 py-0.5 rounded-full`}>
+              {badge.label}
+            </Badge>
+            <Badge className={`${priorityBadge.className} text-[10px] font-medium px-2 py-0.5 rounded-full`}>
+              {priorityBadge.label}
+            </Badge>
+          </div>
         </div>
 
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -84,12 +120,20 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete }:
           <span className="truncate">{profile.city || "—"}</span>
         </div>
 
+        {/* Post status badge */}
+        <Badge className={`${postConfig.badgeClass} text-[11px] font-medium px-2.5 py-1 rounded-full w-fit`}>
+          {postLabel}
+        </Badge>
+
         <div className="flex items-center gap-2 pt-1 border-t border-border/50">
           <Button size="sm" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onOpen}>
             <ExternalLink className="h-3.5 w-3.5" /> Abrir
           </Button>
-          <Button size="sm" variant="outline" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onEdit}>
-            <Pencil className="h-3.5 w-3.5" /> Editar
+          <Button size="sm" variant="outline" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onMarkPost} title="Marcar Postagem">
+            <Send className="h-3.5 w-3.5" /> Postagem
+          </Button>
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onEdit} title="Editar">
+            <Pencil className="h-3.5 w-3.5" />
           </Button>
           {isArchived ? (
             <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onRestore} title="Restaurar">
@@ -109,18 +153,19 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete }:
   );
 };
 
-interface PrioritySectionProps {
-  priorityKey: "high" | "medium" | "low";
+interface PostStatusSectionProps {
+  statusKey: PostStatus;
   profiles: Profile[];
   onOpen: (id: string) => void;
   onEdit: (p: Profile) => void;
   onArchive: (id: string) => void;
   onRestore: (id: string) => void;
   onDelete: (id: string) => void;
+  onMarkPost: (id: string) => void;
 }
 
-const PrioritySection = ({ priorityKey, profiles, onOpen, onEdit, onArchive, onRestore, onDelete }: PrioritySectionProps) => {
-  const config = PRIORITY_CONFIG[priorityKey];
+const PostStatusSection = ({ statusKey, profiles, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost }: PostStatusSectionProps) => {
+  const config = POST_STATUS_CONFIG[statusKey];
   const Icon = config.icon;
 
   if (profiles.length === 0) return null;
@@ -142,6 +187,7 @@ const PrioritySection = ({ priorityKey, profiles, onOpen, onEdit, onArchive, onR
             onArchive={() => onArchive(p.id)}
             onRestore={() => onRestore(p.id)}
             onDelete={() => onDelete(p.id)}
+            onMarkPost={() => onMarkPost(p.id)}
           />
         ))}
       </div>
@@ -156,12 +202,12 @@ const Profiles = () => {
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterPostStatus, setFilterPostStatus] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<string | null>(null);
   const [archivedOpen, setArchivedOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active" });
+  const [form, setForm] = useState({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active", post_frequency_days: "7" });
 
   const load = useCallback(async () => {
     const p = await getProfiles();
@@ -178,24 +224,31 @@ const Profiles = () => {
       const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.city.toLowerCase().includes(search.toLowerCase());
       const matchCity = filterCity === "all" || p.city === filterCity;
       const matchStatus = filterStatus === "all" || p.status === filterStatus;
-      const matchPriority = filterPriority === "all" || p.priority === filterPriority;
-      return matchSearch && matchCity && matchStatus && matchPriority;
+      const matchPostStatus = filterPostStatus === "all" || getPostStatus(p) === filterPostStatus;
+      return matchSearch && matchCity && matchStatus && matchPostStatus;
     });
-  }, [profiles, search, filterCity, filterStatus, filterPriority]);
+  }, [profiles, search, filterCity, filterStatus, filterPostStatus]);
 
   const activeFiltered = filtered.filter(p => p.status !== "archived");
   const archivedFiltered = filtered.filter(p => p.status === "archived");
 
-  const highProfiles = activeFiltered.filter(p => p.priority === "high");
-  const mediumProfiles = activeFiltered.filter(p => p.priority === "medium");
-  const lowProfiles = activeFiltered.filter(p => p.priority === "low");
+  const semPostagem = activeFiltered.filter(p => getPostStatus(p) === "sem_postagem");
+  const atrasados = activeFiltered.filter(p => getPostStatus(p) === "atrasado");
+  const emDia = activeFiltered.filter(p => getPostStatus(p) === "em_dia");
 
-  const resetForm = () => setForm({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active" });
+  const resetForm = () => setForm({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active", post_frequency_days: "7" });
 
   const handleAdd = async () => {
     if (!form.name) return;
-    const result = await upsertProfile({ name: form.name, category: form.category, city: form.city, responsible: form.responsible, priority: form.priority, status: form.status });
-    if (result) await addHistory(result.id, `Perfil "${form.name}" criado`);
+    const result = await upsertProfile({
+      name: form.name, category: form.category, city: form.city, responsible: form.responsible,
+      priority: form.priority, status: form.status,
+    });
+    if (result) {
+      // Update post_frequency_days via direct call since upsertProfile uses typed interface
+      await (supabase as any).from("profiles").update({ post_frequency_days: parseInt(form.post_frequency_days) || 7 }).eq("id", result.id);
+      await addHistory(result.id, `Perfil "${form.name}" criado`);
+    }
     resetForm();
     setShowAdd(false);
     toast.success("Perfil criado!");
@@ -203,17 +256,33 @@ const Profiles = () => {
   };
 
   const openEdit = (p: Profile) => {
-    setForm({ name: p.name, category: p.category, city: p.city, responsible: p.responsible, priority: p.priority || "medium", status: p.status });
+    setForm({
+      name: p.name, category: p.category, city: p.city, responsible: p.responsible,
+      priority: p.priority || "medium", status: p.status,
+      post_frequency_days: String(p.post_frequency_days || 7),
+    });
     setEditTarget(p.id);
   };
 
   const handleEdit = async () => {
     if (!editTarget || !form.name) return;
-    await upsertProfile({ id: editTarget, name: form.name, category: form.category, city: form.city, responsible: form.responsible, priority: form.priority, status: form.status });
+    await upsertProfile({
+      id: editTarget, name: form.name, category: form.category, city: form.city,
+      responsible: form.responsible, priority: form.priority, status: form.status,
+    });
+    await (supabase as any).from("profiles").update({ post_frequency_days: parseInt(form.post_frequency_days) || 7 }).eq("id", editTarget);
     await addHistory(editTarget, "Perfil editado");
     setEditTarget(null);
     resetForm();
     toast.success("Perfil atualizado!");
+    load();
+  };
+
+  const handleMarkPost = async (id: string) => {
+    await (supabase as any).from("profiles").update({ last_post_date: new Date().toISOString() }).eq("id", id);
+    const name = profiles.find(p => p.id === id)?.name;
+    await addHistory(id, `Postagem marcada para "${name}"`);
+    toast.success("Postagem marcada!");
     load();
   };
 
@@ -261,6 +330,10 @@ const Profiles = () => {
         </Select>
       </div>
       <div>
+        <Label>Frequência de postagem (dias)</Label>
+        <Input type="number" min="1" value={form.post_frequency_days} onChange={e => setForm(f => ({ ...f, post_frequency_days: e.target.value }))} />
+      </div>
+      <div>
         <Label>Status</Label>
         <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
           <SelectTrigger><SelectValue /></SelectTrigger>
@@ -292,7 +365,7 @@ const Profiles = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Buscar cliente..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 rounded-xl" />
@@ -313,22 +386,22 @@ const Profiles = () => {
             <SelectItem value="problem">Problema</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filterPriority} onValueChange={setFilterPriority}>
-          <SelectTrigger className="w-[150px] rounded-xl"><SelectValue placeholder="Prioridade" /></SelectTrigger>
+        <Select value={filterPostStatus} onValueChange={setFilterPostStatus}>
+          <SelectTrigger className="w-[160px] rounded-xl"><SelectValue placeholder="Postagem" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="high">Alta</SelectItem>
-            <SelectItem value="medium">Média</SelectItem>
-            <SelectItem value="low">Baixa</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="sem_postagem">Sem postagem</SelectItem>
+            <SelectItem value="atrasado">Atrasados</SelectItem>
+            <SelectItem value="em_dia">Em dia</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Priority sections */}
+      {/* Post Status sections */}
       <div className="space-y-5">
-        <PrioritySection priorityKey="high" profiles={highProfiles} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} />
-        <PrioritySection priorityKey="medium" profiles={mediumProfiles} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} />
-        <PrioritySection priorityKey="low" profiles={lowProfiles} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} />
+        <PostStatusSection statusKey="sem_postagem" profiles={semPostagem} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
+        <PostStatusSection statusKey="atrasado" profiles={atrasados} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
+        <PostStatusSection statusKey="em_dia" profiles={emDia} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
 
         {/* Archived */}
         {archivedFiltered.length > 0 && (
@@ -350,6 +423,7 @@ const Profiles = () => {
                     onArchive={() => handleArchive(p.id)}
                     onRestore={() => handleRestore(p.id)}
                     onDelete={() => setDeleteTarget(p.id)}
+                    onMarkPost={() => handleMarkPost(p.id)}
                   />
                 ))}
               </div>
