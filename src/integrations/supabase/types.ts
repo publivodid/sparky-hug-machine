@@ -226,6 +226,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          automation_active: boolean
           category: string
           city: string
           created_at: string
@@ -240,6 +241,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          automation_active?: boolean
           category?: string
           city?: string
           created_at?: string
@@ -254,6 +256,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          automation_active?: boolean
           category?: string
           city?: string
           created_at?: string
