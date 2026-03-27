@@ -145,7 +145,7 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
           <Badge className={`${postConfig.badgeClass} text-[11px] font-medium px-2.5 py-1 rounded-full w-fit`}>
             {postLabel}
           </Badge>
-          <Badge className={`${profile.automation_active ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300" : "bg-muted text-muted-foreground"} text-[11px] font-medium px-2.5 py-1 rounded-full w-fit`}>
+          <Badge className={`${profile.automation_active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"} text-[11px] font-medium px-2.5 py-1 rounded-full w-fit`}>
             Automação: {profile.automation_active ? "Sim" : "Não"}
           </Badge>
         </div>
