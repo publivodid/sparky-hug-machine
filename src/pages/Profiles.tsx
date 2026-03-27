@@ -14,11 +14,16 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import {
   Plus, Search, MapPin, ChevronDown, ChevronRight,
   AlertTriangle, AlertCircle, CheckCircle2, Archive,
-  ExternalLink, Pencil, Trash2, ArchiveRestore, Send
+  ExternalLink, Pencil, Trash2, ArchiveRestore, Send, CalendarClock
 } from "lucide-react";
 import { toast } from "sonner";
 
 type PostStatus = "sem_postagem" | "atrasado" | "em_dia";
+
+const DIAS_PERMITIDOS = [1, 3, 4]; // seg, qua, qui
+const DIAS_NOMES = "seg, qua e qui";
+
+const isDiaDePostagem = () => DIAS_PERMITIDOS.includes(new Date().getDay());
 
 const getPostStatus = (profile: Profile): PostStatus => {
   if (!profile.last_post_date) return "sem_postagem";
@@ -37,23 +42,9 @@ const getPostBadgeLabel = (profile: Profile): string => {
   return `Atrasado há ${dias} dias`;
 };
 
-const POST_STATUS_CONFIG = {
-  sem_postagem: {
-    label: "Sem Postagem",
-    icon: AlertTriangle,
-    bg: "bg-red-50 dark:bg-red-950/30",
-    border: "border-red-200 dark:border-red-900",
-    iconColor: "text-red-500",
-    badgeClass: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
-  },
-  atrasado: {
-    label: "Atrasados",
-    icon: AlertCircle,
-    bg: "bg-amber-50 dark:bg-amber-950/30",
-    border: "border-amber-200 dark:border-amber-900",
-    iconColor: "text-amber-500",
-    badgeClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
-  },
+const podePostarHoje = isDiaDePostagem();
+
+const POST_STATUS_CONFIG_BASE = {
   em_dia: {
     label: "Em Dia",
     icon: CheckCircle2,
@@ -61,6 +52,24 @@ const POST_STATUS_CONFIG = {
     border: "border-emerald-200 dark:border-emerald-900",
     iconColor: "text-emerald-500",
     badgeClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+  },
+  atrasado: {
+    label: "Atrasados",
+    icon: AlertCircle,
+    bg: podePostarHoje ? "bg-orange-50 dark:bg-orange-950/40" : "bg-amber-50 dark:bg-amber-950/30",
+    border: podePostarHoje ? "border-orange-300 dark:border-orange-800" : "border-amber-200 dark:border-amber-900",
+    iconColor: podePostarHoje ? "text-orange-600" : "text-amber-500",
+    badgeClass: podePostarHoje
+      ? "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300"
+      : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+  },
+  sem_postagem: {
+    label: "Sem Postagem",
+    icon: AlertTriangle,
+    bg: "bg-red-50 dark:bg-red-950/30",
+    border: "border-red-200 dark:border-red-900",
+    iconColor: "text-red-500",
+    badgeClass: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
   },
 } as const;
 
@@ -94,7 +103,7 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
   const badge = getStatusBadge(profile.status);
   const postLabel = getPostBadgeLabel(profile);
   const postStatus = getPostStatus(profile);
-  const postConfig = POST_STATUS_CONFIG[postStatus];
+  const postConfig = POST_STATUS_CONFIG_BASE[postStatus];
   const priorityBadge = PRIORITY_BADGES[profile.priority] || PRIORITY_BADGES.medium;
 
   return (
@@ -129,9 +138,15 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
           <Button size="sm" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onOpen}>
             <ExternalLink className="h-3.5 w-3.5" /> Abrir
           </Button>
-          <Button size="sm" variant="outline" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onMarkPost} title="Marcar Postagem">
-            <Send className="h-3.5 w-3.5" /> Postagem
-          </Button>
+          {podePostarHoje ? (
+            <Button size="sm" variant="outline" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onMarkPost} title="Marcar Postagem">
+              <Send className="h-3.5 w-3.5" /> Postagem
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" className="flex-1 gap-1.5 h-8 text-xs rounded-lg opacity-50 cursor-not-allowed" disabled title={`Postagens apenas ${DIAS_NOMES}`}>
+              <CalendarClock className="h-3.5 w-3.5" /> {DIAS_NOMES}
+            </Button>
+          )}
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onEdit} title="Editar">
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -165,7 +180,7 @@ interface PostStatusSectionProps {
 }
 
 const PostStatusSection = ({ statusKey, profiles, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost }: PostStatusSectionProps) => {
-  const config = POST_STATUS_CONFIG[statusKey];
+  const config = POST_STATUS_CONFIG_BASE[statusKey];
   const Icon = config.icon;
 
   if (profiles.length === 0) return null;
@@ -232,9 +247,13 @@ const Profiles = () => {
   const activeFiltered = filtered.filter(p => p.status !== "archived");
   const archivedFiltered = filtered.filter(p => p.status === "archived");
 
-  const semPostagem = activeFiltered.filter(p => getPostStatus(p) === "sem_postagem");
-  const atrasados = activeFiltered.filter(p => getPostStatus(p) === "atrasado");
+  // Nova ordem: Em dia → Atrasados → Sem postagem
   const emDia = activeFiltered.filter(p => getPostStatus(p) === "em_dia");
+  const atrasados = activeFiltered.filter(p => getPostStatus(p) === "atrasado");
+  const semPostagem = activeFiltered.filter(p => getPostStatus(p) === "sem_postagem");
+
+  // Contador de perfis para postar hoje (atrasados + sem postagem)
+  const perfisParaPostar = atrasados.length + semPostagem.length;
 
   const resetForm = () => setForm({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active", post_frequency_days: "7" });
 
@@ -245,7 +264,6 @@ const Profiles = () => {
       priority: form.priority, status: form.status,
     });
     if (result) {
-      // Update post_frequency_days via direct call since upsertProfile uses typed interface
       await (supabase as any).from("profiles").update({ post_frequency_days: parseInt(form.post_frequency_days) || 7 }).eq("id", result.id);
       await addHistory(result.id, `Perfil "${form.name}" criado`);
     }
@@ -364,6 +382,25 @@ const Profiles = () => {
         </Button>
       </div>
 
+      {/* Posting day banner */}
+      {podePostarHoje && perfisParaPostar > 0 && (
+        <div className="rounded-xl border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 p-4 flex items-center gap-3">
+          <Send className="h-5 w-5 text-orange-600 shrink-0" />
+          <p className="text-sm font-medium text-orange-800 dark:text-orange-300">
+            Você tem <strong>{perfisParaPostar} {perfisParaPostar === 1 ? "perfil" : "perfis"}</strong> para postar hoje
+          </p>
+        </div>
+      )}
+
+      {!podePostarHoje && (
+        <div className="rounded-xl border border-border bg-muted/50 p-3 flex items-center gap-3">
+          <CalendarClock className="h-4 w-4 text-muted-foreground shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Hoje não é dia de postagem. Postagens acontecem às <strong>{DIAS_NOMES}</strong>.
+          </p>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
         <div className="relative flex-1 max-w-sm">
@@ -390,18 +427,18 @@ const Profiles = () => {
           <SelectTrigger className="w-[160px] rounded-xl"><SelectValue placeholder="Postagem" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="sem_postagem">Sem postagem</SelectItem>
-            <SelectItem value="atrasado">Atrasados</SelectItem>
             <SelectItem value="em_dia">Em dia</SelectItem>
+            <SelectItem value="atrasado">Atrasados</SelectItem>
+            <SelectItem value="sem_postagem">Sem postagem</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Post Status sections */}
+      {/* Post Status sections — order: Em dia → Atrasados → Sem postagem */}
       <div className="space-y-5">
-        <PostStatusSection statusKey="sem_postagem" profiles={semPostagem} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
-        <PostStatusSection statusKey="atrasado" profiles={atrasados} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
         <PostStatusSection statusKey="em_dia" profiles={emDia} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
+        <PostStatusSection statusKey="atrasado" profiles={atrasados} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
+        <PostStatusSection statusKey="sem_postagem" profiles={semPostagem} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} />
 
         {/* Archived */}
         {archivedFiltered.length > 0 && (
