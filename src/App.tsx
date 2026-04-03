@@ -10,6 +10,7 @@ import Profiles from "@/pages/Profiles";
 import ProfileDetail from "@/pages/ProfileDetail";
 import AllTasks from "@/pages/AllTasks";
 import CalendarPage from "@/pages/CalendarPage";
+import Postagens from "@/pages/Postagens";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 
