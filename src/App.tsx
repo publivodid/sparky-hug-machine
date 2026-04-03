@@ -10,6 +10,7 @@ import Profiles from "@/pages/Profiles";
 import ProfileDetail from "@/pages/ProfileDetail";
 import AllTasks from "@/pages/AllTasks";
 import CalendarPage from "@/pages/CalendarPage";
+import Postagens from "@/pages/Postagens";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/profiles" element={<Profiles />} />
             <Route path="/profile/:id" element={<ProfileDetail />} />
+            <Route path="/postagens" element={<Postagens />} />
             <Route path="/tasks" element={<AllTasks />} />
             <Route path="/calendar" element={<CalendarPage />} />
           </Route>

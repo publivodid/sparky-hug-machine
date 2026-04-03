@@ -248,6 +248,7 @@ const Profiles = () => {
   const [filterCity, setFilterCity] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPostStatus, setFilterPostStatus] = useState("all");
+  const [filterUpdated, setFilterUpdated] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<string | null>(null);
@@ -265,14 +266,24 @@ const Profiles = () => {
   const cities = useMemo(() => [...new Set(profiles.map(p => p.city).filter(Boolean))].sort(), [profiles]);
 
   const filtered = useMemo(() => {
+    const now = Date.now();
     return profiles.filter(p => {
       const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.city.toLowerCase().includes(search.toLowerCase());
       const matchCity = filterCity === "all" || p.city === filterCity;
       const matchStatus = filterStatus === "all" || p.status === filterStatus;
       const matchPostStatus = filterPostStatus === "all" || getPostStatus(p) === filterPostStatus;
-      return matchSearch && matchCity && matchStatus && matchPostStatus;
+      let matchUpdated = true;
+      if (filterUpdated !== "all") {
+        const lastDate = p.last_post_action_at || p.last_post_date || p.created_at;
+        const diff = now - new Date(lastDate).getTime();
+        const oneDay = 1000 * 60 * 60 * 24;
+        if (filterUpdated === "recent") matchUpdated = diff <= 3 * oneDay;
+        else if (filterUpdated === "week") matchUpdated = diff <= 7 * oneDay;
+        else if (filterUpdated === "month") matchUpdated = diff <= 30 * oneDay;
+      }
+      return matchSearch && matchCity && matchStatus && matchPostStatus && matchUpdated;
     });
-  }, [profiles, search, filterCity, filterStatus, filterPostStatus]);
+  }, [profiles, search, filterCity, filterStatus, filterPostStatus, filterUpdated]);
 
   const activeFiltered = filtered.filter(p => p.status !== "archived");
   const archivedFiltered = filtered.filter(p => p.status === "archived");
@@ -499,6 +510,15 @@ const Profiles = () => {
             <SelectItem value="em_dia">Em dia</SelectItem>
             <SelectItem value="atrasado">Atrasados</SelectItem>
             <SelectItem value="sem_postagem">Sem postagem</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterUpdated} onValueChange={setFilterUpdated}>
+          <SelectTrigger className="w-[160px] rounded-xl"><SelectValue placeholder="Atualizado" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="recent">Recentemente</SelectItem>
+            <SelectItem value="week">Esta semana</SelectItem>
+            <SelectItem value="month">Este mês</SelectItem>
           </SelectContent>
         </Select>
       </div>
