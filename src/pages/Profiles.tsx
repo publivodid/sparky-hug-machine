@@ -265,14 +265,24 @@ const Profiles = () => {
   const cities = useMemo(() => [...new Set(profiles.map(p => p.city).filter(Boolean))].sort(), [profiles]);
 
   const filtered = useMemo(() => {
+    const now = Date.now();
     return profiles.filter(p => {
       const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.city.toLowerCase().includes(search.toLowerCase());
       const matchCity = filterCity === "all" || p.city === filterCity;
       const matchStatus = filterStatus === "all" || p.status === filterStatus;
       const matchPostStatus = filterPostStatus === "all" || getPostStatus(p) === filterPostStatus;
-      return matchSearch && matchCity && matchStatus && matchPostStatus;
+      let matchUpdated = true;
+      if (filterUpdated !== "all") {
+        const lastDate = p.last_post_action_at || p.last_post_date || p.created_at;
+        const diff = now - new Date(lastDate).getTime();
+        const oneDay = 1000 * 60 * 60 * 24;
+        if (filterUpdated === "recent") matchUpdated = diff <= 3 * oneDay;
+        else if (filterUpdated === "week") matchUpdated = diff <= 7 * oneDay;
+        else if (filterUpdated === "month") matchUpdated = diff <= 30 * oneDay;
+      }
+      return matchSearch && matchCity && matchStatus && matchPostStatus && matchUpdated;
     });
-  }, [profiles, search, filterCity, filterStatus, filterPostStatus]);
+  }, [profiles, search, filterCity, filterStatus, filterPostStatus, filterUpdated]);
 
   const activeFiltered = filtered.filter(p => p.status !== "archived");
   const archivedFiltered = filtered.filter(p => p.status === "archived");
