@@ -511,6 +511,15 @@ const Profiles = () => {
             <SelectItem value="sem_postagem">Sem postagem</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={filterUpdated} onValueChange={setFilterUpdated}>
+          <SelectTrigger className="w-[160px] rounded-xl"><SelectValue placeholder="Atualizado" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="recent">Recentemente</SelectItem>
+            <SelectItem value="week">Esta semana</SelectItem>
+            <SelectItem value="month">Este mês</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Post Status sections — order: Em dia → Atrasados → Sem postagem */}
