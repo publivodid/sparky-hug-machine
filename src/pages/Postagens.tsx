@@ -186,8 +186,6 @@ const Postagens = () => {
           {/* Post info & actions */}
           <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3 pl-[52px]">
             <span>Última postagem: <strong>{lastPostDate}</strong></span>
-            <span>Frequência: <strong>{profile.post_frequency_days} dias</strong></span>
-            <span>Postagens: <strong>{profilePosts.length}</strong></span>
           </div>
 
           {/* Post action buttons */}
@@ -212,42 +210,6 @@ const Postagens = () => {
               </Button>
             )}
           </div>
-
-          {/* Recent posts */}
-          {profilePosts.length > 0 ? (
-            <div className="pl-[52px] space-y-2">
-              {profilePosts.slice(0, 3).map(post => {
-                const statusInfo = POST_STATUS_LABELS[post.status] || POST_STATUS_LABELS.pending;
-                return (
-                  <div key={post.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50 border border-border/50">
-                    {post.image_url ? (
-                      <img src={post.image_url} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
-                    ) : (
-                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-foreground truncate">{post.text || "Sem texto"}</p>
-                      <p className="text-[11px] text-muted-foreground">{formatDate(post.created_at)}</p>
-                    </div>
-                    <Badge className={`${statusInfo.className} text-[10px] px-2 py-0.5 rounded-full shrink-0`}>
-                      {statusInfo.label}
-                    </Badge>
-                  </div>
-                );
-              })}
-              {profilePosts.length > 3 && (
-                <p className="text-[11px] text-muted-foreground pl-2">
-                  + {profilePosts.length - 3} mais postagens
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="pl-[52px] text-xs text-muted-foreground italic">
-              Nenhuma postagem registrada
-            </div>
-          )}
         </CardContent>
       </Card>
     );
