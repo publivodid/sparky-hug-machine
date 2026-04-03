@@ -367,27 +367,21 @@ const ProfileDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Recent posts */}
+            {/* Recent posts - last post date */}
             <Card className="rounded-2xl border shadow-sm lg:col-span-3">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-foreground flex items-center gap-2 mb-4"><Image className="h-4 w-4 text-primary" />Postagens Recentes</h3>
-                {recentPosts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-6">Nenhuma postagem</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {recentPosts.map(p => (
-                      <div key={p.id} className="rounded-xl bg-muted/50 overflow-hidden">
-                        {p.image_url && <img src={p.image_url} alt="" className="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setPreviewImage(p.image_url)} />}
-                        <div className="p-3">
-                          <p className="text-sm line-clamp-2">{p.text}</p>
-                          <Badge className={`mt-2 text-[10px] rounded-full ${p.status === "approved" ? "bg-emerald-100 text-emerald-700" : p.status === "rejected" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
-                            {p.status === "pending" ? "Pendente" : p.status === "approved" ? "Aprovado" : "Rejeitado"}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/50">
+                  <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Última postagem</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {profile.last_post_date
+                        ? new Date(profile.last_post_date).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
+                        : "Nenhuma postagem registrada"}
+                    </p>
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           </div>
