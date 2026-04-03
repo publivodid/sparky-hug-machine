@@ -248,6 +248,7 @@ const Profiles = () => {
   const [filterCity, setFilterCity] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPostStatus, setFilterPostStatus] = useState("all");
+  const [filterUpdated, setFilterUpdated] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [editTarget, setEditTarget] = useState<string | null>(null);
