@@ -13,65 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Plus, Search, MapPin, ChevronDown, ChevronRight,
-  AlertTriangle, AlertCircle, CheckCircle2, Archive,
-  ExternalLink, Pencil, Trash2, ArchiveRestore, Send, CalendarClock, Undo2, Wrench
+  Archive, ExternalLink, Pencil, Trash2, ArchiveRestore
 } from "lucide-react";
 import { toast } from "sonner";
-
-type PostStatus = "sem_postagem" | "atrasado" | "em_dia";
-
-const DIAS_PERMITIDOS = [1, 3, 5]; // seg, qua, sex
-const DIAS_NOMES = "seg, qua e sex";
-
-const isDiaDePostagem = () => DIAS_PERMITIDOS.includes(new Date().getDay());
-
-const getPostStatus = (profile: Profile): PostStatus => {
-  if (!profile.last_post_date) return "sem_postagem";
-  const dias = Math.floor((Date.now() - new Date(profile.last_post_date).getTime()) / (1000 * 60 * 60 * 24));
-  return dias > (profile.post_frequency_days || 7) ? "atrasado" : "em_dia";
-};
-
-const getPostBadgeLabel = (profile: Profile): string => {
-  const status = getPostStatus(profile);
-  if (status === "sem_postagem") return "Sem postagem";
-  if (status === "em_dia") {
-    const dias = Math.floor((Date.now() - new Date(profile.last_post_date!).getTime()) / (1000 * 60 * 60 * 24));
-    return dias === 0 ? "Postado hoje" : "Em dia";
-  }
-  const dias = Math.floor((Date.now() - new Date(profile.last_post_date!).getTime()) / (1000 * 60 * 60 * 24));
-  return `Atrasado há ${dias} dias`;
-};
-
-const podePostarHoje = isDiaDePostagem();
-
-const POST_STATUS_CONFIG_BASE = {
-  em_dia: {
-    label: "Em Dia",
-    icon: CheckCircle2,
-    bg: "bg-emerald-50 dark:bg-emerald-950/30",
-    border: "border-emerald-200 dark:border-emerald-900",
-    iconColor: "text-emerald-500",
-    badgeClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
-  },
-  atrasado: {
-    label: "Atrasados",
-    icon: AlertCircle,
-    bg: podePostarHoje ? "bg-orange-50 dark:bg-orange-950/40" : "bg-amber-50 dark:bg-amber-950/30",
-    border: podePostarHoje ? "border-orange-300 dark:border-orange-800" : "border-amber-200 dark:border-amber-900",
-    iconColor: podePostarHoje ? "text-orange-600" : "text-amber-500",
-    badgeClass: podePostarHoje
-      ? "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300"
-      : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
-  },
-  sem_postagem: {
-    label: "Sem Postagem",
-    icon: AlertTriangle,
-    bg: "bg-red-50 dark:bg-red-950/30",
-    border: "border-red-200 dark:border-red-900",
-    iconColor: "text-red-500",
-    badgeClass: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
-  },
-} as const;
 
 const PRIORITY_BADGES: Record<string, { label: string; className: string }> = {
   high: { label: "Alta", className: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300" },
@@ -95,26 +39,11 @@ interface ClientCardProps {
   onArchive: () => void;
   onRestore: () => void;
   onDelete: () => void;
-  onMarkPost: () => void;
-  onUndoPost: () => void;
-  onFixPost: () => void;
 }
 
-const canUndo = (profile: Profile): boolean => {
-  // Show undo whenever last_post_action_at is set (means a "mark post" happened recently)
-  return !!profile.last_post_action_at;
-};
-
-const needsFix = (profile: Profile): boolean => {
-  return !!profile.last_post_date && !profile.previous_post_date && !profile.last_post_action_at;
-};
-
-const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost, onUndoPost, onFixPost }: ClientCardProps) => {
+const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete }: ClientCardProps) => {
   const isArchived = profile.status === "archived";
   const badge = getStatusBadge(profile.status);
-  const postLabel = getPostBadgeLabel(profile);
-  const postStatus = getPostStatus(profile);
-  const postConfig = POST_STATUS_CONFIG_BASE[postStatus];
   const priorityBadge = PRIORITY_BADGES[profile.priority] || PRIORITY_BADGES.medium;
 
   return (
@@ -140,11 +69,7 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
           <span className="truncate">{profile.city || "—"}</span>
         </div>
 
-        {/* Post status badge */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge className={`${postConfig.badgeClass} text-[11px] font-medium px-2.5 py-1 rounded-full w-fit`}>
-            {postLabel}
-          </Badge>
           <Badge className={`${profile.automation_active ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"} text-[11px] font-medium px-2.5 py-1 rounded-full w-fit`}>
             Automação: {profile.automation_active ? "Sim" : "Não"}
           </Badge>
@@ -154,25 +79,6 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
           <Button size="sm" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onOpen}>
             <ExternalLink className="h-3.5 w-3.5" /> Abrir
           </Button>
-          {podePostarHoje ? (
-            <Button size="sm" variant="outline" className="flex-1 gap-1.5 h-8 text-xs rounded-lg" onClick={onMarkPost} title="Marcar Postagem">
-              <Send className="h-3.5 w-3.5" /> Postagem
-            </Button>
-          ) : (
-            <Button size="sm" variant="outline" className="flex-1 gap-1.5 h-8 text-xs rounded-lg opacity-50 cursor-not-allowed" disabled title={`Postagens apenas ${DIAS_NOMES}`}>
-              <CalendarClock className="h-3.5 w-3.5" /> {DIAS_NOMES}
-            </Button>
-          )}
-          {canUndo(profile) && (
-            <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs rounded-lg border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30" onClick={onUndoPost} title="Desfazer postagem">
-              <Undo2 className="h-3.5 w-3.5" /> Desfazer
-            </Button>
-          )}
-          {needsFix(profile) && (
-            <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs rounded-lg border-muted-foreground/30 text-muted-foreground hover:bg-muted" onClick={onFixPost} title="Usar apenas se a postagem foi marcada antes da atualização do sistema">
-              <Wrench className="h-3.5 w-3.5" /> Corrigir
-            </Button>
-          )}
           <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={onEdit} title="Editar">
             <Pencil className="h-3.5 w-3.5" />
           </Button>
@@ -194,52 +100,6 @@ const ClientCard = ({ profile, onOpen, onEdit, onArchive, onRestore, onDelete, o
   );
 };
 
-interface PostStatusSectionProps {
-  statusKey: PostStatus;
-  profiles: Profile[];
-  onOpen: (id: string) => void;
-  onEdit: (p: Profile) => void;
-  onArchive: (id: string) => void;
-  onRestore: (id: string) => void;
-  onDelete: (id: string) => void;
-  onMarkPost: (id: string) => void;
-  onUndoPost: (id: string) => void;
-  onFixPost: (id: string) => void;
-}
-
-const PostStatusSection = ({ statusKey, profiles, onOpen, onEdit, onArchive, onRestore, onDelete, onMarkPost, onUndoPost, onFixPost }: PostStatusSectionProps) => {
-  const config = POST_STATUS_CONFIG_BASE[statusKey];
-  const Icon = config.icon;
-
-  if (profiles.length === 0) return null;
-
-  return (
-    <div className={`rounded-2xl border ${config.border} ${config.bg} p-5`}>
-      <div className="flex items-center gap-2 mb-4">
-        <Icon className={`h-5 w-5 ${config.iconColor}`} />
-        <h2 className="font-semibold text-foreground text-lg">{config.label}</h2>
-        <Badge variant="secondary" className="text-xs ml-1">{profiles.length}</Badge>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {profiles.map(p => (
-          <ClientCard
-            key={p.id}
-            profile={p}
-            onOpen={() => onOpen(p.id)}
-            onEdit={() => onEdit(p)}
-            onArchive={() => onArchive(p.id)}
-            onRestore={() => onRestore(p.id)}
-            onDelete={() => onDelete(p.id)}
-            onMarkPost={() => onMarkPost(p.id)}
-            onUndoPost={() => onUndoPost(p.id)}
-            onFixPost={() => onFixPost(p.id)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
 const Profiles = () => {
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -247,7 +107,7 @@ const Profiles = () => {
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterPostStatus, setFilterPostStatus] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
   const [filterUpdated, setFilterUpdated] = useState("all");
   const [showAdd, setShowAdd] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -271,7 +131,7 @@ const Profiles = () => {
       const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.city.toLowerCase().includes(search.toLowerCase());
       const matchCity = filterCity === "all" || p.city === filterCity;
       const matchStatus = filterStatus === "all" || p.status === filterStatus;
-      const matchPostStatus = filterPostStatus === "all" || getPostStatus(p) === filterPostStatus;
+      const matchPriority = filterPriority === "all" || p.priority === filterPriority;
       let matchUpdated = true;
       if (filterUpdated !== "all") {
         const lastDate = p.last_post_action_at || p.last_post_date || p.created_at;
@@ -281,20 +141,12 @@ const Profiles = () => {
         else if (filterUpdated === "week") matchUpdated = diff <= 7 * oneDay;
         else if (filterUpdated === "month") matchUpdated = diff <= 30 * oneDay;
       }
-      return matchSearch && matchCity && matchStatus && matchPostStatus && matchUpdated;
+      return matchSearch && matchCity && matchStatus && matchPriority && matchUpdated;
     });
-  }, [profiles, search, filterCity, filterStatus, filterPostStatus, filterUpdated]);
+  }, [profiles, search, filterCity, filterStatus, filterPriority, filterUpdated]);
 
   const activeFiltered = filtered.filter(p => p.status !== "archived");
   const archivedFiltered = filtered.filter(p => p.status === "archived");
-
-  // Nova ordem: Em dia → Atrasados → Sem postagem
-  const emDia = activeFiltered.filter(p => getPostStatus(p) === "em_dia");
-  const atrasados = activeFiltered.filter(p => getPostStatus(p) === "atrasado");
-  const semPostagem = activeFiltered.filter(p => getPostStatus(p) === "sem_postagem");
-
-  // Contador de perfis para postar hoje (atrasados + sem postagem)
-  const perfisParaPostar = atrasados.length + semPostagem.length;
 
   const resetForm = () => setForm({ name: "", category: "", city: "", responsible: "", priority: "medium", status: "active", automation_active: "no" });
 
@@ -334,47 +186,6 @@ const Profiles = () => {
     setEditTarget(null);
     resetForm();
     toast.success("Perfil atualizado!");
-    load();
-  };
-
-  const handleMarkPost = async (id: string) => {
-    const profile = profiles.find(p => p.id === id);
-    const now = new Date().toISOString();
-    await (supabase as any).from("profiles").update({
-      previous_post_date: profile?.last_post_date || null,
-      last_post_date: now,
-      last_post_action_at: now,
-    }).eq("id", id);
-    const name = profile?.name;
-    await addHistory(id, `Postagem marcada para "${name}"`);
-    toast.success("Postagem marcada ✔️ (clique em desfazer se foi engano)");
-    load();
-  };
-
-  const handleUndoPost = async (id: string) => {
-    const profile = profiles.find(p => p.id === id);
-    if (!profile || !canUndo(profile)) return;
-    // If previous_post_date is null, client had no post before → restore to null (sem postagem)
-    await (supabase as any).from("profiles").update({
-      last_post_date: profile.previous_post_date || null,
-      previous_post_date: null,
-      last_post_action_at: null,
-    }).eq("id", id);
-    await addHistory(id, `Postagem desfeita para "${profile.name}"`);
-    toast.success("Postagem desfeita.");
-    load();
-  };
-
-  const handleFixPost = async (id: string) => {
-    const profile = profiles.find(p => p.id === id);
-    if (!profile) return;
-    await (supabase as any).from("profiles").update({
-      last_post_date: null,
-      previous_post_date: null,
-      last_post_action_at: null,
-    }).eq("id", id);
-    await addHistory(id, `Postagem corrigida para "${profile.name}"`);
-    toast.success("Postagem corrigida. Cliente retornou para 'Sem postagem'.");
     load();
   };
 
@@ -462,25 +273,6 @@ const Profiles = () => {
         </Button>
       </div>
 
-      {/* Posting day banner */}
-      {podePostarHoje && perfisParaPostar > 0 && (
-        <div className="rounded-xl border border-orange-300 bg-orange-50 dark:bg-orange-950/30 dark:border-orange-800 p-4 flex items-center gap-3">
-          <Send className="h-5 w-5 text-orange-600 shrink-0" />
-          <p className="text-sm font-medium text-orange-800 dark:text-orange-300">
-            Você tem <strong>{perfisParaPostar} {perfisParaPostar === 1 ? "perfil" : "perfis"}</strong> para postar hoje
-          </p>
-        </div>
-      )}
-
-      {!podePostarHoje && (
-        <div className="rounded-xl border border-border bg-muted/50 p-3 flex items-center gap-3">
-          <CalendarClock className="h-4 w-4 text-muted-foreground shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            Hoje não é dia de postagem. Postagens acontecem às <strong>{DIAS_NOMES}</strong>.
-          </p>
-        </div>
-      )}
-
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
         <div className="relative flex-1 max-w-sm">
@@ -503,13 +295,13 @@ const Profiles = () => {
             <SelectItem value="problem">Problema</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filterPostStatus} onValueChange={setFilterPostStatus}>
-          <SelectTrigger className="w-[160px] rounded-xl"><SelectValue placeholder="Postagem" /></SelectTrigger>
+        <Select value={filterPriority} onValueChange={setFilterPriority}>
+          <SelectTrigger className="w-[140px] rounded-xl"><SelectValue placeholder="Prioridade" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="em_dia">Em dia</SelectItem>
-            <SelectItem value="atrasado">Atrasados</SelectItem>
-            <SelectItem value="sem_postagem">Sem postagem</SelectItem>
+            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="high">Alta</SelectItem>
+            <SelectItem value="medium">Média</SelectItem>
+            <SelectItem value="low">Baixa</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterUpdated} onValueChange={setFilterUpdated}>
@@ -523,11 +315,23 @@ const Profiles = () => {
         </Select>
       </div>
 
-      {/* Post Status sections — order: Em dia → Atrasados → Sem postagem */}
+      {/* Client cards */}
       <div className="space-y-5">
-        <PostStatusSection statusKey="em_dia" profiles={emDia} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} onFixPost={handleFixPost} />
-        <PostStatusSection statusKey="atrasado" profiles={atrasados} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} onFixPost={handleFixPost} />
-        <PostStatusSection statusKey="sem_postagem" profiles={semPostagem} onOpen={id => navigate(`/profile/${id}`)} onEdit={openEdit} onArchive={handleArchive} onRestore={handleRestore} onDelete={setDeleteTarget} onMarkPost={handleMarkPost} onUndoPost={handleUndoPost} onFixPost={handleFixPost} />
+        {activeFiltered.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {activeFiltered.map(p => (
+              <ClientCard
+                key={p.id}
+                profile={p}
+                onOpen={() => navigate(`/profile/${p.id}`)}
+                onEdit={() => openEdit(p)}
+                onArchive={() => handleArchive(p.id)}
+                onRestore={() => handleRestore(p.id)}
+                onDelete={() => setDeleteTarget(p.id)}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Archived */}
         {archivedFiltered.length > 0 && (
@@ -549,9 +353,6 @@ const Profiles = () => {
                     onArchive={() => handleArchive(p.id)}
                     onRestore={() => handleRestore(p.id)}
                     onDelete={() => setDeleteTarget(p.id)}
-                    onMarkPost={() => handleMarkPost(p.id)}
-                    onUndoPost={() => handleUndoPost(p.id)}
-                    onFixPost={() => handleFixPost(p.id)}
                   />
                 ))}
               </div>
